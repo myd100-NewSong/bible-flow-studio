@@ -57,12 +57,15 @@
       <section class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
         <div>
           <h2 class="text-base font-bold text-amber-400 mb-1">말씀 입력 &amp; 장면 설계</h2>
-          <p class="text-xs text-slate-400">성경 본문을 넣고 테마를 고르면 어도비 스톡 안전 필터가 적용된 Cut 1·2 프롬프트가 생성됩니다.</p>
+          <p class="text-xs text-slate-400">성경 출처를 입력하면 영문 제목에 성경 책과 장수가 자동 포함됩니다.</p>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">성경 장절 (참고용)</label>
-          <input id="verseRef" type="text" value="출애굽기 5장 (Exodus 5)" placeholder="예: 시편 23편 1~2절"
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-semibold text-slate-300">성경 출처 (책·장)</label>
+            <span id="detectedRefBadge" class="text-[11px] font-mono text-emerald-400"></span>
+          </div>
+          <input id="verseRef" type="text" value="출애굽기 5장" oninput="updateDetectedRef(); buildLocalPrompts();" placeholder="예: 출애굽기 5장, 시편 23편, John 3"
             class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-500" />
         </div>
 
@@ -94,19 +97,19 @@
           </div>
           <div>
             <label class="block text-[11px] text-slate-400 mb-1">공통 배경 공간 (Step 1)</label>
-            <input id="customBg" type="text" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
+            <input id="customBg" type="text" oninput="buildLocalPrompts()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
           </div>
           <div>
             <label class="block text-[11px] text-slate-400 mb-1">Cut 1 인물 감정 묘사 (Step 2)</label>
-            <input id="customCut1" type="text" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
+            <input id="customCut1" type="text" oninput="buildLocalPrompts()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
           </div>
           <div>
             <label class="block text-[11px] text-slate-400 mb-1">Cut 2 손과 핵심 사물 묘사 (Step 2)</label>
-            <input id="customCut2" type="text" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
+            <input id="customCut2" type="text" oninput="buildLocalPrompts()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
           </div>
           <div>
             <label class="block text-[11px] text-slate-400 mb-1">핵심 주제 영문 키워드 (3~5개)</label>
-            <input id="customTopic" type="text" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
+            <input id="customTopic" type="text" oninput="buildLocalPrompts()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
           </div>
         </div>
 
@@ -150,7 +153,7 @@
           <div class="pt-2 border-t border-slate-800 space-y-2.5">
             <div>
               <div class="flex justify-between items-center mb-1">
-                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 제목 (Title)</span>
+                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 제목 (Title · 200자 이내)</span>
                 <button onclick="copyById('cut1Title')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
               </div>
               <p id="cut1Title" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 mono"></p>
@@ -181,7 +184,7 @@
           <div class="pt-2 border-t border-slate-800 space-y-2.5">
             <div>
               <div class="flex justify-between items-center mb-1">
-                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 제목 (Title)</span>
+                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 제목 (Title · 200자 이내)</span>
                 <button onclick="copyById('cut2Title')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
               </div>
               <p id="cut2Title" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 mono"></p>
@@ -328,6 +331,94 @@
   </div>
 
   <script>
+    // 성경 66권 한글 풀네임 · 약어 · 영문 매핑 (긴 명칭 우선 매칭)
+    const BIBLE_BOOKS = [
+      ["창세기", "Genesis"], ["출애굽기", "Exodus"], ["레위기", "Leviticus"], ["민수기", "Numbers"], ["신명기", "Deuteronomy"],
+      ["여호수아", "Joshua"], ["사사기", "Judges"], ["룻기", "Ruth"], ["사무엘상", "1 Samuel"], ["사무엘하", "2 Samuel"],
+      ["열왕기상", "1 Kings"], ["열왕기하", "2 Kings"], ["역대상", "1 Chronicles"], ["역대하", "2 Chronicles"],
+      ["에스라", "Ezra"], ["느헤미야", "Nehemiah"], ["에스더", "Esther"], ["욥기", "Job"], ["시편", "Psalm"], ["잠언", "Proverbs"],
+      ["전도서", "Ecclesiastes"], ["아가", "Song of Solomon"], ["이사야", "Isaiah"], ["예레미야애가", "Lamentations"], ["예레미야", "Jeremiah"],
+      ["에스겔", "Ezekiel"], ["다니엘", "Daniel"], ["호세아", "Hosea"], ["요엘", "Joel"], ["아모스", "Amos"], ["오바댜", "Obadiah"],
+      ["요나", "Jonah"], ["미가", "Micah"], ["나훔", "Nahum"], ["하박국", "Habakkuk"], ["스바냐", "Zephaniah"], ["학개", "Haggai"],
+      ["스가랴", "Zechariah"], ["말라기", "Malachi"],
+      ["마태복음", "Matthew"], ["마가복음", "Mark"], ["누가복음", "Luke"], ["요한복음", "John"], ["사도행전", "Acts"],
+      ["로마서", "Romans"], ["고린도전서", "1 Corinthians"], ["고린도후서", "2 Corinthians"], ["갈라디아서", "Galatians"],
+      ["에베소서", "Ephesians"], ["빌립보서", "Philippians"], ["골로새서", "Colossians"],
+      ["데살로니가전서", "1 Thessalonians"], ["데살로니가후서", "2 Thessalonians"],
+      ["디모데전서", "1 Timothy"], ["디모데후서", "2 Timothy"], ["디도서", "Titus"], ["빌레몬서", "Philemon"],
+      ["히브리서", "Hebrews"], ["야고보서", "James"], ["베드로전서", "1 Peter"], ["베드로후서", "2 Peter"],
+      ["요한일서", "1 John"], ["요한이서", "2 John"], ["요한삼서", "3 John"], ["유다서", "Jude"], ["요한계시록", "Revelation"],
+      // 한글 주요 약어
+      ["삼상", "1 Samuel"], ["삼하", "2 Samuel"], ["왕상", "1 Kings"], ["왕하", "2 Kings"],
+      ["대상", "1 Chronicles"], ["대하", "2 Chronicles"], ["고전", "1 Corinthians"], ["고후", "2 Corinthians"],
+      ["살전", "1 Thessalonians"], ["살후", "2 Thessalonians"], ["딤전", "1 Timothy"], ["딤후", "2 Timothy"],
+      ["벧전", "1 Peter"], ["벧후", "2 Peter"], ["요일", "1 John"], ["요이", "2 John"], ["요삼", "3 John"],
+      ["창", "Genesis"], ["출", "Exodus"], ["레", "Leviticus"], ["민", "Numbers"], ["신", "Deuteronomy"],
+      ["수", "Joshua"], ["삿", "Judges"], ["룻", "Ruth"], ["스", "Ezra"], ["느", "Nehemiah"], ["에", "Esther"],
+      ["욥", "Job"], ["시", "Psalm"], ["잠", "Proverbs"], ["전", "Ecclesiastes"], ["아", "Song of Solomon"],
+      ["사", "Isaiah"], ["렘", "Jeremiah"], ["애", "Lamentations"], ["겔", "Ezekiel"], ["단", "Daniel"],
+      ["호", "Hosea"], ["욜", "Joel"], ["암", "Amos"], ["옵", "Obadiah"], ["욘", "Jonah"], ["미", "Micah"],
+      ["나", "Nahum"], ["합", "Habakkuk"], ["습", "Zephaniah"], ["학", "Haggai"], ["슥", "Zechariah"], ["말", "Malachi"],
+      ["마", "Matthew"], ["막", "Mark"], ["눅", "Luke"], ["요", "John"], ["행", "Acts"], ["롬", "Romans"],
+      ["갈", "Galatians"], ["엡", "Ephesians"], ["빌", "Philippians"], ["골", "Colossians"], ["딛", "Titus"],
+      ["몬", "Philemon"], ["히", "Hebrews"], ["약", "James"], ["유", "Jude"], ["계", "Revelation"]
+    ];
+
+    function parseEnglishBibleRef(rawInput) {
+      const text = (rawInput || "").trim();
+      if (!text) return "";
+
+      // 1. 영문 성경 책명 + 장수 패턴 우선 확인 (예: Exodus 5, 1 Corinthians 13:4, Psalms 23)
+      const engMatch = text.match(/\b([1-3]?\s?[A-Za-z]+(?:\s+of\s+[A-Za-z]+)?)\s+(\d+)/);
+      if (engMatch) {
+        const candidateBook = engMatch[1].trim();
+        const foundEng = BIBLE_BOOKS.find(b => b[1].toLowerCase() === candidateBook.toLowerCase() || (candidateBook.toLowerCase() === "psalms"));
+        if (foundEng) {
+          const bookName = candidateBook.toLowerCase() === "psalms" ? "Psalm" : foundEng[1];
+          return `${bookName} ${engMatch[2]}`;
+        }
+      }
+
+      // 2. 한글 성경 책명(풀네임 -> 약어 순서) + 장수 숫자 추출
+      for (const [kr, en] of BIBLE_BOOKS) {
+        const isShort = kr.length === 1;
+        const pattern = isShort
+          ? new RegExp(`^${kr}\\s*(\\d+)`)
+          : new RegExp(`${kr}\\s*(\\d+)`);
+        const m = text.match(pattern);
+        if (m) {
+          return `${en} ${m[1]}`;
+        }
+      }
+      return "";
+    }
+
+    function updateDetectedRef() {
+      const refVal = document.getElementById('verseRef').value;
+      const engRef = parseEnglishBibleRef(refVal);
+      const badge = document.getElementById('detectedRefBadge');
+      if (engRef) {
+        badge.textContent = `영문 제목 반영: ${engRef}`;
+        badge.className = "text-[11px] font-mono text-emerald-400";
+      } else {
+        badge.textContent = "성경 장절 미인식 (일반 제목 생성)";
+        badge.className = "text-[11px] font-mono text-slate-500";
+      }
+    }
+
+    function formatAdobeTitle(baseTitle, engBibleRef) {
+      let cleanBase = baseTitle.trim().replace(/\.$/, "");
+      if (engBibleRef && !cleanBase.toLowerCase().includes(engBibleRef.toLowerCase())) {
+        const suffix = ` inspired by biblical ${engBibleRef}`;
+        if ((cleanBase + suffix).length <= 200) {
+          cleanBase += suffix;
+        } else {
+          cleanBase = cleanBase.slice(0, 200 - suffix.length - 3).trim() + "..." + suffix;
+        }
+      }
+      return cleanBase.slice(0, 200);
+    }
+
     const PRESETS = {
       exodus5: {
         bg: "an ancient Middle Eastern mudbrick workshop bathed in warm late-afternoon desert sunlight, weathered raw sandstone walls and dusty ground",
@@ -378,6 +469,7 @@
     let currentImageBase64 = null;
 
     function init() {
+      updateDetectedRef();
       applyPresetFields();
       updateApiBadge();
     }
@@ -421,6 +513,7 @@
       const c1 = document.getElementById('customCut1').value.trim();
       const c2 = document.getElementById('customCut2').value.trim();
       const topic = document.getElementById('customTopic').value.trim();
+      const engRef = parseEnglishBibleRef(document.getElementById('verseRef').value);
 
       const cut1Steps = [
         {
@@ -457,11 +550,21 @@
 
       const topicArr = topic.split(',').map(s => s.trim()).filter(Boolean);
       const tMain = topicArr.slice(0, 3).join(', ');
-      document.getElementById('cut1Title').textContent = `Close up portrait of ${c1.split(',')[0]} with natural copy space reflecting ${tMain}`;
-      document.getElementById('cut2Title').textContent = `Close up of ${c2.split(',')[0]} in ancient Middle East with natural copy space`;
+      const rawTitle1 = `Close up portrait of ${c1.split(',')[0]} with natural copy space reflecting ${tMain}`;
+      const rawTitle2 = `Close up of ${c2.split(',')[0]} in ancient Middle East with natural copy space`;
 
-      const baseKw1 = [...topicArr, "ancient", "Middle Eastern", "Jewish", "biblical", "portrait", "close up", "copy space", "coarse linen", "sandstone", "natural sunlight", "weathered", "faith", "hope", "reflection", "historical", "35mm", "photorealistic", "commercial stock", "storytelling", "emotion", "serenity", "heritage"];
-      const baseKw2 = [...topicArr, "human hands", "close up", "ancient", "Middle East", "biblical", "raw stone", "craftsmanship", "coarse fabric", "copy space", "sunlight", "weathered hands", "texture", "historical", "devotion", "tradition", "natural light", "35mm", "photorealistic", "rustic", "authentic", "earth tones", "detail"];
+      document.getElementById('cut1Title').textContent = formatAdobeTitle(rawTitle1, engRef);
+      document.getElementById('cut2Title').textContent = formatAdobeTitle(rawTitle2, engRef);
+
+      const refBookKw = engRef ? engRef.split(' ')[0] : null;
+      const baseKw1 = [
+        ...(refBookKw ? [engRef, refBookKw] : []),
+        ...topicArr, "ancient", "Middle Eastern", "Jewish", "biblical", "portrait", "close up", "copy space", "coarse linen", "sandstone", "natural sunlight", "weathered", "faith", "hope", "reflection", "historical", "35mm", "photorealistic", "commercial stock", "storytelling", "emotion", "serenity"
+      ];
+      const baseKw2 = [
+        ...(refBookKw ? [engRef, refBookKw] : []),
+        ...topicArr, "human hands", "close up", "ancient", "Middle East", "biblical", "raw stone", "craftsmanship", "coarse fabric", "copy space", "sunlight", "weathered hands", "texture", "historical", "devotion", "tradition", "natural light", "35mm", "photorealistic", "rustic", "authentic", "earth tones"
+      ];
 
       document.getElementById('cut1Keywords').textContent = [...new Set(baseKw1)].slice(0, 25).join(', ');
       document.getElementById('cut2Keywords').textContent = [...new Set(baseKw2)].slice(0, 25).join(', ');
@@ -485,17 +588,19 @@
 
     async function generateWithGemini(apiKey) {
       const ref = document.getElementById('verseRef').value;
+      const engRef = parseEnglishBibleRef(ref);
       const verse = document.getElementById('verseText').value;
       showToast("Gemini AI가 성경 구절을 분석 중입니다...");
 
       const systemPrompt = `You are a top visual storytelling artist and Adobe Stock compliance expert.
-Given the Bible passage (${ref}: ${verse}), design 2 photorealistic 16:9 close-up concepts for Google Flow sequential 3-step input (Nano Banana 2.1 & Pro optimized).
+Given the Bible passage (${ref}${engRef ? ` / English Ref: ${engRef}` : ''}: ${verse}), design 2 photorealistic 16:9 close-up concepts for Google Flow sequential 3-step input (Nano Banana 2.1 & Pro optimized).
 CRITICAL RULES:
 - Adobe Stock approval (95%+) is TOP priority: strictly avoid blood, wounds, violence, crowds, text, logos, famous actors. Convert any violent biblical imagery into safe, poignant symbolic objects/emotions.
 - Ancient Middle Eastern / Jewish realistic setting, natural copy space, 35mm lens, pin-sharp focus from foreground to background, raw stone texture, coarse fabric grain, realistic skin pores, natural 5 fingers.
 - Cut 1: Emotional close-up of 1 ancient Middle Eastern person.
 - Cut 2: Close-up of weathered human hands & key object (zero face distortion risk).
 - Step 2 MUST start with "Keep the exact..." and Step 3 MUST start with "Preserve the exact..." for Flow multi-turn editing.
+- IMPORTANT FOR TITLE: If a Bible source is provided (${engRef || ref}), you MUST include the English Bible book name and chapter number (e.g., "${engRef || 'Exodus 5'}") naturally in BOTH Cut 1 and Cut 2 English Titles (under 200 chars).
 Return STRICT JSON ONLY:
 {
   "cut1": { "step1": "...", "step2": "...", "step3": "...", "title": "...", "keywords": "25 comma-separated safe English keywords" },
@@ -526,9 +631,9 @@ Return STRICT JSON ONLY:
           { label: "Step 3 - Expressing details and adding special effects", text: parsed.cut2.step3 }
         ], 'c2');
 
-        document.getElementById('cut1Title').textContent = parsed.cut1.title;
+        document.getElementById('cut1Title').textContent = formatAdobeTitle(parsed.cut1.title, engRef);
         document.getElementById('cut1Keywords').textContent = parsed.cut1.keywords;
-        document.getElementById('cut2Title').textContent = parsed.cut2.title;
+        document.getElementById('cut2Title').textContent = formatAdobeTitle(parsed.cut2.title, engRef);
         document.getElementById('cut2Keywords').textContent = parsed.cut2.keywords;
         showToast("Gemini AI 생성 완료!");
       } catch (e) {
@@ -539,8 +644,9 @@ Return STRICT JSON ONLY:
 
     function copyMasterMetaPrompt() {
       const ref = document.getElementById('verseRef').value;
+      const engRef = parseEnglishBibleRef(ref);
       const verse = document.getElementById('verseText').value;
-      const master = `Act as a top image artist and Adobe Stock compliance expert. Based on this Bible passage (${ref}):
+      const master = `Act as a top image artist and Adobe Stock compliance expert. Based on this Bible passage (${ref}${engRef ? ` / ${engRef}` : ''}):
 "${verse}"
 
 Create 2 photorealistic 16:9 close-up concepts optimized for Google Flow sequential 3-step input (Nano Banana 2.1 & Pro).
@@ -549,7 +655,7 @@ Rules:
 2. Ancient Middle Eastern / Jewish realistic setting, natural copy space, 35mm lens, pin-sharp focus from foreground to background, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, perfect human hand with 5 natural fingers, 8k resolution, commercial stock photo.
 3. Cut 1: Emotional close-up of 1 person. Cut 2: Close-up of human hands & key object.
 4. Write Step 1 (Space & background), Step 2 (Keep the exact background... Place key materials), Step 3 (Preserve the exact composition... Expressing details & special effects) in English.
-5. Also provide Adobe Stock English Title (under 200 chars) and 25 safe English Keywords for each cut.`;
+5. Also provide Adobe Stock English Title (under 200 chars, MUST include the English Bible book and chapter number e.g. "${engRef || 'Exodus 5'}") and 25 safe English Keywords for each cut.`;
       navigator.clipboard.writeText(master);
       showToast("Gemini/ChatGPT 웹 복사용 마스터 요청문이 복사되었습니다!");
     }
@@ -599,14 +705,12 @@ Rules:
 
       document.getElementById('imgDimBadge').textContent = `${w} × ${h} (${mp.toFixed(2)} MP)`;
 
-      // Corner 400% Crop for Watermark Detection
       const cCanvas = document.getElementById('cornerCanvas');
       const cCtx = cCanvas.getContext('2d');
       cCtx.clearRect(0, 0, 140, 140);
       const cropSize = Math.min(120, Math.floor(Math.min(w, h) * 0.14));
       cCtx.drawImage(img, w - cropSize, h - cropSize, cropSize, cropSize, 0, 0, 140, 140);
 
-      // Exposure & Sharpness Sampling on downscaled canvas
       const aCanvas = document.createElement('canvas');
       const sw = 320;
       const sh = Math.round(320 * (h / w));
@@ -638,7 +742,6 @@ Rules:
       const goodExposure = avgLum >= 45 && avgLum <= 215;
       const goodSharpness = avgEdge >= 10;
 
-      // Score calculation (max 35 from tech checks, 65 from checklist)
       currentTechScore = (is4MP ? 15 : 4) + (is169 ? 5 : 0) + (goodExposure ? 8 : 3) + (goodSharpness ? 7 : 2);
 
       const checksHtml = [
