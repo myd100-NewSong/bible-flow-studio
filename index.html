@@ -99,7 +99,7 @@
           </div>
           <textarea id="userSceneDesc" rows="3" placeholder="예: 이스라엘 백성들이 벽돌을 만드는데 더 고생하는 장면 (여기에 적으신 내용이 가장 우선 반영됩니다)"
             class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400 leading-relaxed"></textarea>
-          <p class="text-[11px] text-slate-400">한글·영문 모두 가능하며, 비워두면 본문 전체를 기준으로 작성합니다.</p>
+          <p class="text-[11px] text-slate-400">한글로 적어도 자동으로 영어로 번역되어 프롬프트에 반영됩니다. 비워두면 본문 전체를 기준으로 작성합니다.</p>
         </div>
 
         <div class="grid grid-cols-1 gap-2.5 pt-1">
@@ -795,6 +795,49 @@
       return cleaned.slice(0, 280);
     }
 
+    const sceneTranslateCache = {};
+
+    function noteForTranslation(sceneEn, userScene) {
+      if (!userScene || !sceneEn || sceneEn === userScene) return "";
+      return '<br/><span class="text-emerald-300">🌐 영문 번역 반영:</span> <span class="mono">' + sceneEn.replace(/</g, '&lt;') + '</span>';
+    }
+
+    async function translateSceneToEnglish(text, apiKey) {
+      const cleaned = (text || "").trim();
+      if (!cleaned) return "";
+      if (extractCleanEnglishSnippet(cleaned)) return cleaned;
+      if (sceneTranslateCache[cleaned]) return sceneTranslateCache[cleaned];
+
+      let out = "";
+      if (apiKey) {
+        try {
+          const t = await callGeminiWithFallback(apiKey, {
+            contents: [{ parts: [{ text: "Translate the following Korean scene description into one precise, natural English description for an image-generation prompt. Keep every concrete detail (people, their number, actions, objects, setting, mood). Return ONLY the English text, no quotes, no explanation.\n\n" + cleaned }] }]
+          });
+          out = (t || "").trim().replace(/^["']+|["']+$/g, '');
+        } catch (e) {}
+      }
+      if (!out) {
+        try {
+          const res = await fetchWithTimeout("https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=en&dt=t&q=" + encodeURIComponent(cleaned), {}, 8000);
+          const data = await res.json();
+          out = (data[0] || []).map(function(x) { return x[0]; }).join('').trim();
+        } catch (e) {}
+      }
+      if (!out) {
+        try {
+          const res = await fetchWithTimeout("https://api.mymemory.translated.net/get?langpair=ko|en&q=" + encodeURIComponent(cleaned), {}, 8000);
+          const data = await res.json();
+          out = ((data.responseData && data.responseData.translatedText) || "").trim();
+        } catch (e) {}
+      }
+      if (out && extractCleanEnglishSnippet(out)) {
+        sceneTranslateCache[cleaned] = out;
+        return out;
+      }
+      return "";
+    }
+
     async function generateLiteralPrompts() {
       const ref = document.getElementById('verseRef').value.trim();
       const verse = document.getElementById('verseText').value.trim();
@@ -806,8 +849,18 @@
       }
 
       document.getElementById('apiErrorBanner').classList.add('hidden');
-      const extracted = extractConcreteElements(ref, verse, userScene);
       const apiKey = localStorage.getItem('gemini_api_key');
+
+      let sceneEn = "";
+      if (userScene) {
+        const gBtn = document.getElementById('generateBtn');
+        gBtn.disabled = true;
+        gBtn.textContent = "🌐 장면 묘사를 영어로 번역 중...";
+        try { sceneEn = await translateSceneToEnglish(userScene, apiKey); }
+        finally { gBtn.disabled = false; gBtn.textContent = "✨ 본문 충실 프롬프트 생성"; }
+        if (!sceneEn) showToast("번역 서버에 연결하지 못해 한글 원문을 그대로 사용합니다.");
+      }
+      const extracted = extractConcreteElements(ref, verse, userScene + " " + sceneEn);
 
       const priorityBadge = document.getElementById('directorPriorityBadge');
       if (userScene) {
@@ -819,16 +872,16 @@
       }
 
       if (apiKey) {
-        await generateLiteralWithGemini(apiKey, ref, verse, userScene, extracted);
+        await generateLiteralWithGemini(apiKey, ref, verse, userScene, extracted, sceneEn);
       } else {
-        const data = buildLiteralNarrativeLocally(ref, verse, userScene, extracted);
-        renderImageGuideBox(data.chips, data.guideText);
+        const data = buildLiteralNarrativeLocally(ref, verse, userScene, extracted, sceneEn);
+        renderImageGuideBox(data.chips, data.guideText + noteForTranslation(sceneEn, userScene));
         applyGeneratedOutput(data.cut1, data.cut2, data.title1, data.title2, data.topicArr);
         showToast(userScene ? "회원님 장면 묘사가 최우선 반영되었습니다!" : "16:9 황금비율 본문 충실 프롬프트가 생성되었습니다!");
       }
     }
 
-    function buildLiteralNarrativeLocally(ref, verse, userScene, extracted) {
+    function buildLiteralNarrativeLocally(ref, verse, userScene, extracted, sceneEn) {
       const bgs = extracted.filter(function(e) { return Boolean(e.bg); });
       const objs = extracted.filter(function(e) { return Boolean(e.obj); });
       const emotions = extracted.filter(function(e) { return Boolean(e.emotion); });
@@ -843,9 +896,9 @@
       const primaryEmotion = emotions[0] ? emotions[0].emotion : "showing authentic facial emotion directly reflecting the scene";
       const primaryHand = hands[0] ? hands[0].handPose : "weathered human hands performing the exact labor or action described";
 
-      const engScene = extractCleanEnglishSnippet(userScene);
+      const engScene = extractCleanEnglishSnippet(userScene) || extractCleanEnglishSnippet(sceneEn || "");
       const engVerse = extractCleanEnglishSnippet(verse);
-      const isCrowd = /백성|사람들|노동자|일꾼|무리|군중|이스라엘|people|workers|crowd|laborers|israelites/i.test(userScene || "");
+      const isCrowd = /백성|사람들|노동자|일꾼|무리|군중|이스라엘|people|workers|crowd|laborers|israelites|men and women|group of/i.test((userScene || "") + " " + (sceneEn || ""));
 
       const chips = (userScene ? ["#사용자 장면 최우선"] : [])
         .concat(extracted.slice(0, 4).map(function(e) { return e.chip; }))
@@ -1000,7 +1053,7 @@
       throw new Error(firstError || "가용한 Gemini 모델을 찾지 못했습니다.");
     }
 
-    async function generateLiteralWithGemini(apiKey, ref, verse, userScene, extracted) {
+    async function generateLiteralWithGemini(apiKey, ref, verse, userScene, extracted, sceneEn) {
       const btn = document.getElementById('generateBtn');
       btn.disabled = true;
       btn.textContent = "⏳ Gemini AI가 프롬프트 작성 중...";
@@ -1008,7 +1061,7 @@
       const engRef = getEffectiveBibleRef();
       const refTitleRule = engRef ? ', MUST include "' + engRef + '"' : '';
       const userSceneBlock = userScene
-        ? '\nHIGHEST PRIORITY — USER EXACT SCENE DIRECTION (100% MUST FOLLOW THIS ABOVE ALL ELSE):\n"' + userScene + '"\n'
+        ? '\nHIGHEST PRIORITY — USER EXACT SCENE DIRECTION (100% MUST FOLLOW THIS ABOVE ALL ELSE):\n"' + userScene + '"\n' + (sceneEn && sceneEn !== userScene ? 'English translation of the scene: "' + sceneEn + '"\n' : '')
         : '';
 
       const prompt = 'You are a top visual storytelling artist and Adobe Stock prompt engineer.\n' +
@@ -1036,15 +1089,15 @@
         const cleaned = stripMarkdownCodeFences(rawText);
         const parsed = JSON.parse(cleaned);
 
-        renderImageGuideBox(parsed.chips || [], parsed.guideText || "");
+        renderImageGuideBox(parsed.chips || [], (parsed.guideText || "") + noteForTranslation(sceneEn, userScene));
         applyGeneratedOutput(parsed.cut1, parsed.cut2, parsed.title1, parsed.title2, parsed.keywords || []);
         showToast("Gemini AI 16:9 황금비율 프롬프트 작성 완료!");
       } catch (e) {
         const errBanner = document.getElementById('apiErrorBanner');
         errBanner.classList.remove('hidden');
         errBanner.innerHTML = '<strong>⚠️ Gemini API 안내:</strong> ' + e.message + '<br/><span class="text-slate-300">→ 내장된 로컬 엔진으로 요청하신 장면을 그대로 작성했습니다.</span>';
-        const data = buildLiteralNarrativeLocally(ref, verse, userScene, extracted);
-        renderImageGuideBox(data.chips, data.guideText);
+        const data = buildLiteralNarrativeLocally(ref, verse, userScene, extracted, sceneEn);
+        renderImageGuideBox(data.chips, data.guideText + noteForTranslation(sceneEn, userScene));
         applyGeneratedOutput(data.cut1, data.cut2, data.title1, data.title2, data.topicArr);
       } finally {
         btn.disabled = false;
