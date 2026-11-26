@@ -28,7 +28,7 @@
 
       <div class="flex items-center gap-2">
         <span id="apiStatusBadge" class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-          무료 로컬 모드 작동중
+          무료 로컬 분석 엔진
         </span>
         <button onclick="toggleApiModal()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">
           ⚙️ API 설정 (선택)
@@ -55,146 +55,157 @@
       
       <!-- Left Input Panel -->
       <section class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
-        <div>
-          <h2 class="text-base font-bold text-amber-400 mb-1">말씀 입력 &amp; 장면 설계</h2>
-          <p class="text-xs text-slate-400">성경 출처를 입력하면 영문 제목에 성경 책과 장수가 자동 포함됩니다.</p>
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <h2 class="text-base font-bold text-amber-400 mb-1">말씀 입력 &amp; 프롬프트 생성</h2>
+            <p class="text-xs text-slate-400">성경 출처와 본문을 입력하면 본문 내용을 분석해 프롬프트를 생성합니다.</p>
+          </div>
+          <button onclick="resetAll()" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0">
+            초기화
+          </button>
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <label class="text-xs font-semibold text-slate-300">성경 출처 (책·장)</label>
-            <span id="detectedRefBadge" class="text-[11px] font-mono text-emerald-400"></span>
+            <span id="detectedRefBadge" class="text-[11px] font-mono text-slate-500">출처 입력 시 영문 제목 반영</span>
           </div>
-          <input id="verseRef" type="text" value="출애굽기 5장" oninput="updateDetectedRef(); buildLocalPrompts();" placeholder="예: 출애굽기 5장, 시편 23편, John 3"
-            class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-500" />
+          <input id="verseRef" type="text" value="" oninput="updateDetectedRef()" placeholder="예: 출애굽기 4장, 시편 23편, John 3"
+            class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500" />
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1.5">성경 본문 (한글 또는 영문)</label>
-          <textarea id="verseText" rows="4" placeholder="여기에 성경 구절을 붙여넣으세요..."
-            class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">After this, Moses and Aaron went to visit Pharaoh... Do not give the people any more straw with which to make bricks. But they must still make the same number of bricks as before.</textarea>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">장면 프리셋 (API 없이 바로 생성 시 적용)</label>
-          <select id="presetSelect" onchange="applyPresetFields()"
-            class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2 text-sm text-amber-300 focus:outline-none focus:border-amber-500">
-            <option value="exodus5">출애굽기 5장 — 짚 없는 진흙 벽돌 &amp; 탄식하는 중동인</option>
-            <option value="prayer">간절한 기도 — 사암 성소 앞 기도하는 유대인과 두 손</option>
-            <option value="shepherd">선한 목자 (시편 23) — 양 떼를 돌보는 목자와 지팡이/양털</option>
-            <option value="bread">생명의 떡 (성찬/오병이어) — 햇살 아래 거친 보리빵을 떼는 손</option>
-            <option value="scroll">말씀과 등불 (시편 119) — 올리브 등잔 옆 고대 양피지 두루마리</option>
-            <option value="sower">씨 뿌리는 자 (마 13) — 거친 땅에 씨앗을 쥔 농부의 손과 눈빛</option>
-            <option value="custom">직접 입력 (아래 세부 장면 커스터마이징)</option>
-          </select>
-        </div>
-
-        <!-- Customizable Scene Fields -->
-        <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
-          <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
-            <span>세부 장면 요소 (영문, 수정 가능)</span>
-            <span class="text-[11px] text-emerald-400">폭력/유혈 자동 배제</span>
-          </div>
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">공통 배경 공간 (Step 1)</label>
-            <input id="customBg" type="text" oninput="buildLocalPrompts()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
-          </div>
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">Cut 1 인물 감정 묘사 (Step 2)</label>
-            <input id="customCut1" type="text" oninput="buildLocalPrompts()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
-          </div>
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">Cut 2 손과 핵심 사물 묘사 (Step 2)</label>
-            <input id="customCut2" type="text" oninput="buildLocalPrompts()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
-          </div>
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">핵심 주제 영문 키워드 (3~5개)</label>
-            <input id="customTopic" type="text" oninput="buildLocalPrompts()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
-          </div>
+          <textarea id="verseText" rows="7" placeholder="성경 구절을 여기에 입력하거나 붙여넣으세요..."
+            class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 leading-relaxed"></textarea>
         </div>
 
         <div class="grid grid-cols-1 gap-2.5 pt-1">
-          <button onclick="generatePrompts()" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/10">
-            ✨ Flow 3단계 프롬프트 &amp; 스톡 태그 생성
+          <button onclick="generatePrompts()" class="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/10">
+            ✨ Flow 3단계 프롬프트 &amp; 스톡 태그 생성하기
           </button>
           <button onclick="copyMasterMetaPrompt()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition">
-            📋 무료 Gemini/ChatGPT 웹용 마스터 요청문 복사 (API 없을 때)
+            📋 무료 Gemini/ChatGPT 웹용 마스터 요청문 복사
           </button>
         </div>
+
+        <!-- Detected Themes Indicator -->
+        <div id="themeSummaryBox" class="hidden p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+          <div class="text-[11px] font-bold text-emerald-400">🔎 본문에서 감지된 시각적 핵심 요소</div>
+          <p id="detectedThemesText" class="text-xs text-slate-300 leading-relaxed"></p>
+        </div>
+
+        <!-- Optional Fine-tuning Drawer -->
+        <details id="fineTuneBox" class="hidden rounded-xl bg-slate-950/70 border border-slate-800 p-3.5">
+          <summary class="text-xs font-bold text-slate-300 cursor-pointer select-none">
+            🛠️ 세부 영문 묘사 직접 수정하기 (클릭)
+          </summary>
+          <div class="space-y-3 mt-3">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">공통 배경 공간 (Step 1)</label>
+              <input id="customBg" type="text" oninput="applyCustomEdits()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Cut 1 인물 감정 묘사 (Step 2)</label>
+              <input id="customCut1" type="text" oninput="applyCustomEdits()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Cut 2 손과 핵심 사물 묘사 (Step 2)</label>
+              <input id="customCut2" type="text" oninput="applyCustomEdits()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">핵심 주제 영문 키워드 (3~5개)</label>
+              <input id="customTopic" type="text" oninput="applyCustomEdits()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
+            </div>
+          </div>
+        </details>
       </section>
 
       <!-- Right Output Panel -->
       <section class="lg:col-span-7 space-y-5">
         
-        <!-- Cut Selector & CSV -->
+        <!-- Top Bar -->
         <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-4">
           <div class="flex items-center gap-2">
             <span class="text-sm font-bold text-white">생성 결과</span>
             <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">16:9 · 35mm · Copy Space · 스톡 안전 모드</span>
           </div>
-          <button onclick="downloadCSV()" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">
+          <button id="csvBtn" onclick="downloadCSV()" disabled class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-500 font-semibold transition cursor-not-allowed">
             ⬇ 어도비 스톡 CSV 다운로드
           </button>
         </div>
 
-        <!-- CUT 1 -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div>
-              <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Cut 1 · 인물 감정 클로즈업</span>
-              <h3 class="text-sm font-semibold text-white mt-0.5">고대 중동/유대인 인물 표정 + 자연 카피스페이스</h3>
-            </div>
-            <span class="text-[11px] px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">Flow 순차 입력용</span>
-          </div>
-
-          <div class="space-y-3" id="cut1Steps"></div>
-
-          <!-- Cut 1 Metadata -->
-          <div class="pt-2 border-t border-slate-800 space-y-2.5">
-            <div>
-              <div class="flex justify-between items-center mb-1">
-                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 제목 (Title · 200자 이내)</span>
-                <button onclick="copyById('cut1Title')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
-              </div>
-              <p id="cut1Title" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 mono"></p>
-            </div>
-            <div>
-              <div class="flex justify-between items-center mb-1">
-                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 키워드 (25개)</span>
-                <button onclick="copyById('cut1Keywords')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
-              </div>
-              <p id="cut1Keywords" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-300 mono leading-relaxed"></p>
-            </div>
-          </div>
+        <!-- Empty State -->
+        <div id="emptyResultState" class="bg-slate-900 border border-dashed border-slate-800 rounded-2xl p-12 text-center space-y-3">
+          <div class="text-4xl">✍️</div>
+          <h3 class="text-base font-bold text-slate-200">프롬프트 창이 비어 있습니다</h3>
+          <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+            왼쪽에 <strong>성경 출처(예: 출애굽기 4장)</strong>와 <strong>성경 본문</strong>을 입력한 뒤<br/>
+            <span class="text-amber-400 font-semibold">[✨ Flow 3단계 프롬프트 &amp; 스톡 태그 생성하기]</span> 버튼을 눌러주세요.
+          </p>
         </div>
 
-        <!-- CUT 2 -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div>
-              <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Cut 2 · 손과 행동 디테일 클로즈업</span>
-              <h3 class="text-sm font-semibold text-white mt-0.5">얼굴 왜곡 리스크 0% · 고승인률 스톡 구도</h3>
+        <!-- Generated Results Container (Hidden initially) -->
+        <div id="resultsWrapper" class="hidden space-y-5">
+          <!-- CUT 1 -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Cut 1 · 인물 감정 클로즈업</span>
+                <h3 class="text-sm font-semibold text-white mt-0.5">고대 중동/유대인 인물 표정 + 자연 카피스페이스</h3>
+              </div>
+              <span class="text-[11px] px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">Flow 순차 입력용</span>
             </div>
-            <span class="text-[11px] px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/20">Flow 순차 입력용</span>
+
+            <div class="space-y-3" id="cut1Steps"></div>
+
+            <!-- Cut 1 Metadata -->
+            <div class="pt-2 border-t border-slate-800 space-y-2.5">
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 제목 (Title · 200자 이내)</span>
+                  <button onclick="copyById('cut1Title')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
+                </div>
+                <p id="cut1Title" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 mono"></p>
+              </div>
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 키워드 (25개)</span>
+                  <button onclick="copyById('cut1Keywords')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
+                </div>
+                <p id="cut1Keywords" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-300 mono leading-relaxed"></p>
+              </div>
+            </div>
           </div>
 
-          <div class="space-y-3" id="cut2Steps"></div>
-
-          <!-- Cut 2 Metadata -->
-          <div class="pt-2 border-t border-slate-800 space-y-2.5">
-            <div>
-              <div class="flex justify-between items-center mb-1">
-                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 제목 (Title · 200자 이내)</span>
-                <button onclick="copyById('cut2Title')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
+          <!-- CUT 2 -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Cut 2 · 손과 행동 디테일 클로즈업</span>
+                <h3 class="text-sm font-semibold text-white mt-0.5">얼굴 왜곡 리스크 0% · 고승인률 스톡 구도</h3>
               </div>
-              <p id="cut2Title" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 mono"></p>
+              <span class="text-[11px] px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/20">Flow 순차 입력용</span>
             </div>
-            <div>
-              <div class="flex justify-between items-center mb-1">
-                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 키워드 (25개)</span>
-                <button onclick="copyById('cut2Keywords')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
+
+            <div class="space-y-3" id="cut2Steps"></div>
+
+            <!-- Cut 2 Metadata -->
+            <div class="pt-2 border-t border-slate-800 space-y-2.5">
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 제목 (Title · 200자 이내)</span>
+                  <button onclick="copyById('cut2Title')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
+                </div>
+                <p id="cut2Title" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 mono"></p>
               </div>
-              <p id="cut2Keywords" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-300 mono leading-relaxed"></p>
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 키워드 (25개)</span>
+                  <button onclick="copyById('cut2Keywords')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
+                </div>
+                <p id="cut2Keywords" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-300 mono leading-relaxed"></p>
+              </div>
             </div>
           </div>
         </div>
@@ -309,9 +320,9 @@
         <button onclick="toggleApiModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">
-        API 키를 입력하지 않아도 모든 기본 기능(프리셋 프롬프트, 스톡 태그, 4MP/노출/워터마크 검수)은 100% 작동합니다.
-        추후 <strong>어떤 성경 구절이든 AI가 자동 작성 + 이미지 AI 정밀 스캔</strong>을 원하실 때만 Google AI Studio 무료 API 키를 입력하세요.
-        키는 회원님의 브라우저(<code class="text-amber-300">localStorage</code>)에만 저장되며 외부 서버로 유출되지 않습니다.
+        API 키가 없어도 내장된 성경 본문 분석 엔진과 스톡 검수기가 정상 작동합니다.
+        더 정교한 AI 문맥 생성과 이미지 비전 검수를 원하실 때만 Google AI Studio 무료 API 키를 입력하세요.
+        키는 회원님의 브라우저(<code class="text-amber-300">localStorage</code>)에만 저장됩니다.
       </p>
       <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1">Gemini API Key</label>
@@ -331,7 +342,7 @@
   </div>
 
   <script>
-    // 성경 66권 한글 풀네임 · 약어 · 영문 매핑 (긴 명칭 우선 매칭)
+    // 성경 66권 한글 풀네임 · 약어 · 영문 매핑
     const BIBLE_BOOKS = [
       ["창세기", "Genesis"], ["출애굽기", "Exodus"], ["레위기", "Leviticus"], ["민수기", "Numbers"], ["신명기", "Deuteronomy"],
       ["여호수아", "Joshua"], ["사사기", "Judges"], ["룻기", "Ruth"], ["사무엘상", "1 Samuel"], ["사무엘하", "2 Samuel"],
@@ -348,7 +359,6 @@
       ["디모데전서", "1 Timothy"], ["디모데후서", "2 Timothy"], ["디도서", "Titus"], ["빌레몬서", "Philemon"],
       ["히브리서", "Hebrews"], ["야고보서", "James"], ["베드로전서", "1 Peter"], ["베드로후서", "2 Peter"],
       ["요한일서", "1 John"], ["요한이서", "2 John"], ["요한삼서", "3 John"], ["유다서", "Jude"], ["요한계시록", "Revelation"],
-      // 한글 주요 약어
       ["삼상", "1 Samuel"], ["삼하", "2 Samuel"], ["왕상", "1 Kings"], ["왕하", "2 Kings"],
       ["대상", "1 Chronicles"], ["대하", "2 Chronicles"], ["고전", "1 Corinthians"], ["고후", "2 Corinthians"],
       ["살전", "1 Thessalonians"], ["살후", "2 Thessalonians"], ["딤전", "1 Timothy"], ["딤후", "2 Timothy"],
@@ -364,105 +374,105 @@
       ["몬", "Philemon"], ["히", "Hebrews"], ["약", "James"], ["유", "Jude"], ["계", "Revelation"]
     ];
 
-    function parseEnglishBibleRef(rawInput) {
-      const text = (rawInput || "").trim();
-      if (!text) return "";
-
-      // 1. 영문 성경 책명 + 장수 패턴 우선 확인 (예: Exodus 5, 1 Corinthians 13:4, Psalms 23)
-      const engMatch = text.match(/\b([1-3]?\s?[A-Za-z]+(?:\s+of\s+[A-Za-z]+)?)\s+(\d+)/);
-      if (engMatch) {
-        const candidateBook = engMatch[1].trim();
-        const foundEng = BIBLE_BOOKS.find(b => b[1].toLowerCase() === candidateBook.toLowerCase() || (candidateBook.toLowerCase() === "psalms"));
-        if (foundEng) {
-          const bookName = candidateBook.toLowerCase() === "psalms" ? "Psalm" : foundEng[1];
-          return `${bookName} ${engMatch[2]}`;
-        }
-      }
-
-      // 2. 한글 성경 책명(풀네임 -> 약어 순서) + 장수 숫자 추출
-      for (const [kr, en] of BIBLE_BOOKS) {
-        const isShort = kr.length === 1;
-        const pattern = isShort
-          ? new RegExp(`^${kr}\\s*(\\d+)`)
-          : new RegExp(`${kr}\\s*(\\d+)`);
-        const m = text.match(pattern);
-        if (m) {
-          return `${en} ${m[1]}`;
-        }
-      }
-      return "";
-    }
-
-    function updateDetectedRef() {
-      const refVal = document.getElementById('verseRef').value;
-      const engRef = parseEnglishBibleRef(refVal);
-      const badge = document.getElementById('detectedRefBadge');
-      if (engRef) {
-        badge.textContent = `영문 제목 반영: ${engRef}`;
-        badge.className = "text-[11px] font-mono text-emerald-400";
-      } else {
-        badge.textContent = "성경 장절 미인식 (일반 제목 생성)";
-        badge.className = "text-[11px] font-mono text-slate-500";
-      }
-    }
-
-    function formatAdobeTitle(baseTitle, engBibleRef) {
-      let cleanBase = baseTitle.trim().replace(/\.$/, "");
-      if (engBibleRef && !cleanBase.toLowerCase().includes(engBibleRef.toLowerCase())) {
-        const suffix = ` inspired by biblical ${engBibleRef}`;
-        if ((cleanBase + suffix).length <= 200) {
-          cleanBase += suffix;
-        } else {
-          cleanBase = cleanBase.slice(0, 200 - suffix.length - 3).trim() + "..." + suffix;
-        }
-      }
-      return cleanBase.slice(0, 200);
-    }
-
-    const PRESETS = {
-      exodus5: {
+    // 성경 본문 시각적 모티브 분석 사전 (Adobe Stock 안전 필터 적용)
+    const BIBLICAL_MOTIFS = [
+      {
+        label: "경배와 겸손 (Worship & Reverence)",
+        keywords: ["worship", "bow", "heads down", "kneel", "reverence", "adore", "경배", "예배", "머리 숙여", "머리를 숙", "엎드려", "절하", "무릎"],
+        bg: "a quiet ancient Middle Eastern stone courtyard bathed in warm, reverent golden-hour sunlight with weathered limestone masonry",
+        cut1: "a middle-aged ancient Middle Eastern Jewish person with head gently bowed, eyes softly closed in deep reverence, humility, and heartfelt worship, weathered olive skin, natural beard, coarse unbleached linen tunic",
+        cut2: "a pair of weathered ancient human hands resting humbly pressed together over coarse linen fabric in quiet prayer and reverence beside a raw carved stone step",
+        topic: "worship, reverence, humility, faith, prayer"
+      },
+      {
+        label: "표적·믿음·지팡이 (Signs, Faith & Staff)",
+        keywords: ["sign", "miracle", "wonder", "believed", "believe", "staff", "rod", "moses", "aaron", "표적", "이적", "기적", "믿었", "믿음", "지팡이", "모세", "아론"],
+        bg: "an open sun-drenched ancient Middle Eastern stone gathering place with dusty sandstone walls and clear warm sky",
+        cut1: "an earnest ancient Middle Eastern Jewish man gazing forward with wide, awe-struck eyes filled with newfound belief, hope, and solemn conviction, weathered skin, coarse woven cloak over linen tunic",
+        cut2: "a pair of weathered sun-tanned ancient human hands gripping a rough, natural wooden shepherd staff firmly over dry earth and sunlit raw stone",
+        topic: "faith, belief, awe, wooden staff, conviction"
+      },
+      {
+        label: "고된 노동·벽돌·짚 (Hardship & Mudbrick)",
+        keywords: ["brick", "straw", "clay", "mud", "taskmaster", "slave", "벽돌", "짚", "진흙", "감독", "노역", "종"],
         bg: "an ancient Middle Eastern mudbrick workshop bathed in warm late-afternoon desert sunlight, weathered raw sandstone walls and dusty ground",
         cut1: "a middle-aged ancient Middle Eastern Jewish man looking slightly upward with a deeply weary, sorrowful, and earnest expression, weathered olive skin, dusty dark beard, coarse unbleached linen tunic",
         cut2: "a pair of weathered sun-tanned ancient human hands pressing wet dark brown mud into a rough wooden brick mold on a raw stone surface, beside sparse broken dry straw and a cracked unfired mudbrick",
-        topic: "mudbrick, straw, hardship, prayer, ancient Middle East"
+        topic: "mudbrick, straw, hardship, perseverance, labor"
       },
-      prayer: {
-        bg: "a quiet ancient Judean stone courtyard at golden hour, warm sunbeams crossing rough limestone masonry and an uncluttered sunlit plaster wall",
-        cut1: "an elderly ancient Middle Eastern man with eyes gently lifted in reverent silent prayer, deep character lines, calm hopeful expression, coarse woven wool shawl over linen tunic",
-        cut2: "weathered human hands clasped together gently in earnest prayer near a coarse linen garment over a raw stone ledge",
-        topic: "prayer, faith, devotion, hope, ancient Middle East"
+      {
+        label: "고통·긍휼·위로 (Compassion & Hard Life)",
+        keywords: ["hard life", "sorry", "mercy", "compassion", "cry", "sorrow", "tear", "suffer", "affliction", "고난", "고통", "불쌍", "긍휼", "눈물", "슬픔", "부르짖", "돌보"],
+        bg: "a weathered ancient Middle Eastern sandstone alley lit by soft, compassionate late-afternoon sunlight casting gentle shadows",
+        cut1: "an ancient Middle Eastern man with deeply expressive, glistening eyes filled with sorrow yet quiet hope for deliverance, weathered brow, coarse dusty linen tunic",
+        cut2: "a pair of weathered calloused human hands gently clasped over the heart against coarse unbleached linen fabric in earnest supplication",
+        topic: "compassion, hope, endurance, mercy, solace"
       },
-      shepherd: {
-        bg: "rocky Judean hills covered with sparse dry pasture grass under soft morning golden light, distant open horizon",
-        cut1: "a calm, watchful ancient Middle Eastern shepherd looking attentively over the hillside, weathered sun-tanned face, natural beard, traditional coarse striped wool cloak",
-        cut2: "rough weathered human hands resting firmly on a carved rustic wooden shepherd staff beside soft coarse natural sheep wool",
-        topic: "shepherd, guidance, care, sheep, ancient pasture"
+      {
+        label: "기도·간구 (Prayer & Supplication)",
+        keywords: ["pray", "prayer", "supplication", "ask", "plead", "lord", "god", "기도", "간구", "부르짖", "여호와", "하나님"],
+        bg: "a tranquil ancient Judean limestone courtyard bathed in warm morning sunbeams with an uncluttered sunlit stone wall",
+        cut1: "an ancient Middle Eastern Jewish person looking slightly skyward in sincere, silent prayer with peaceful determination, natural olive skin, coarse woven wool shawl",
+        cut2: "weathered human hands folded gently in earnest prayer over a rough chiseled raw stone ledge in warm morning light",
+        topic: "prayer, devotion, faith, hope, serenity"
       },
-      bread: {
-        bg: "a humble ancient Middle Eastern stone dwelling table lit by warm natural window light, raw rustic stone wall in the background",
-        cut1: "a serene ancient Jewish man looking down with gratitude and warmth, soft natural morning light across his face, simple coarse linen tunic",
+      {
+        label: "양과 목자 (Shepherd & Flock)",
+        keywords: ["shepherd", "sheep", "lamb", "flock", "pasture", "green", "양", "어린 양", "목자", "푸른 풀밭", "초장", "지팡이"],
+        bg: "rocky Judean hills with sparse sunlit pasture grass and warm morning light overlooking an open quiet valley",
+        cut1: "a calm, attentive ancient Middle Eastern shepherd looking thoughtfully over the hillside, weathered sun-tanned face, natural beard, traditional coarse striped wool cloak",
+        cut2: "rough weathered human hands gently cradling soft natural sheep wool beside a rustic wooden shepherd staff",
+        topic: "shepherd, care, guidance, sheep wool, pasture"
+      },
+      {
+        label: "떡·포도주·식탁 (Bread & Fellowship)",
+        keywords: ["bread", "loaf", "wine", "cup", "table", "eat", "feast", "manna", "떡", "빵", "포도주", "잔", "식탁", "만나"],
+        bg: "a humble ancient Middle Eastern stone home interior lit by warm natural doorway sunlight and raw stone walls",
+        cut1: "a serene ancient Middle Eastern man looking downward with deep gratitude and warmth, soft natural morning light across his face, simple coarse linen tunic",
         cut2: "a pair of weathered human hands gently breaking a rustic baked coarse barley bread loaf on a raw weathered wooden and stone table",
-        topic: "breaking bread, fellowship, gratitude, barley loaf, rustic table"
+        topic: "breaking bread, gratitude, fellowship, barley loaf, hospitality"
       },
-      scroll: {
-        bg: "an ancient stone study niche lit by soft natural side light and warm ambient tones, raw chiseled limestone surface",
-        cut1: "a thoughtful ancient Middle Eastern scribe looking intently in quiet contemplation, natural olive complexion, grey-streaked beard, coarse dark linen robe",
-        cut2: "aged human hands gently unrolling a weathered blank parchment scroll beside a small handmade terracotta oil lamp with a steady flame",
-        topic: "ancient scroll, wisdom, scripture, terracotta lamp, study"
+      {
+        label: "바다·풍랑·어부 (Sea, Storm & Fishermen)",
+        keywords: ["sea", "storm", "wind", "wave", "boat", "ship", "fish", "net", "water", "바다", "풍랑", "바람", "배", "물고기", "그물", "물가"],
+        bg: "an ancient rocky shoreline by calm sunlit waters at dawn with weathered timber dock edges and open distant horizon",
+        cut1: "a weathered ancient Middle Eastern fisherman looking steadfastly toward the sunlit horizon with calm courage, wind-tousled hair, damp coarse linen tunic",
+        cut2: "rough, sun-darkened human hands holding a thick woven natural hemp rope and coarse fishing net on weathered timber",
+        topic: "fisherman, rope, courage, perseverance, shoreline"
       },
-      sower: {
-        bg: "sunlit dry plowed earth and rocky soil in an ancient Middle Eastern terraced field under clear morning light",
-        cut1: "a determined ancient Middle Eastern farmer gazing across the sunlit field with quiet hope, sun-weathered skin, sweat and dust, coarse burlap-like linen tunic",
-        cut2: "calloused human hands cupped open holding golden wheat seeds ready to scatter over dark cracked dry soil",
-        topic: "sower, wheat seeds, harvest, patience, ancient agriculture"
+      {
+        label: "씨앗·밭·추수 (Sower, Seeds & Harvest)",
+        keywords: ["seed", "sow", "field", "soil", "harvest", "wheat", "grain", "vine", "fruit", "씨", "밭", "땅", "추수", "열매", "밀", "포도"],
+        bg: "sunlit dry plowed earth and rocky soil in an ancient Middle Eastern terraced field under crisp morning daylight",
+        cut1: "a hopeful ancient Middle Eastern farmer gazing across the sunlit earth with quiet patience, sun-weathered skin, coarse linen tunic",
+        cut2: "calloused human hands cupped open holding golden wheat seeds above cracked dry fertile soil in warm sunlight",
+        topic: "seeds, harvest, patience, agriculture, hope"
       },
-      custom: {
-        bg: "an ancient Middle Eastern stone courtyard bathed in warm natural afternoon sunlight, clean uncluttered raw sandstone background",
-        cut1: "an ancient Middle Eastern Jewish person with a deeply sincere and emotional expression, weathered natural skin, coarse unbleached linen clothing",
-        cut2: "a pair of weathered human hands performing a gentle, purposeful action with natural ancient wooden or clay objects on a raw stone surface",
-        topic: "biblical concept, faith, ancient history, reflection, sunlight"
+      {
+        label: "말씀·두루마리·등불 (Scripture & Light)",
+        keywords: ["scroll", "book", "law", "word", "write", "read", "lamp", "light", "flame", "두루마리", "말씀", "율법", "등불", "빛", "촛불"],
+        bg: "an ancient limestone study room illuminated by warm natural side light and soft ambient tones",
+        cut1: "a thoughtful ancient Middle Eastern scribe gazing attentively in quiet contemplation, natural olive complexion, grey-streaked beard, coarse linen robe",
+        cut2: "aged weathered human hands gently unrolling an old blank parchment scroll beside a handmade clay terracotta oil lamp",
+        topic: "ancient scroll, wisdom, light, study, scripture"
+      },
+      {
+        label: "광야·여정·돌 (Wilderness & Journey)",
+        keywords: ["desert", "wilderness", "mountain", "stone", "rock", "journey", "walk", "way", "road", "광야", "사막", "산", "바위", "돌", "길", "여정"],
+        bg: "an expansive rocky desert wilderness under clear golden afternoon sunlight with rugged raw sandstone formations",
+        cut1: "a resolute ancient Middle Eastern traveler looking ahead into the open sunlit distance with quiet determination, dusty skin, coarse desert cloak",
+        cut2: "weathered human hands resting steadily upon a rugged sun-baked sandstone rock along a dusty desert trail",
+        topic: "wilderness, journey, perseverance, desert, stone"
+      },
+      {
+        label: "치유·만짐·평화 (Healing & Peace — 폭력/상처 순화)",
+        keywords: ["heal", "touch", "sick", "blind", "peace", "forgive", "love", "save", "deliver", "sword", "war", "고치", "치유", "평안", "용서", "사랑", "구원", "전쟁", "칼"],
+        bg: "a peaceful ancient Middle Eastern courtyard with soft golden sunlight filtering over raw limestone walls and olive leaves",
+        cut1: "an ancient Middle Eastern person with a deeply relieved, peaceful, and grateful expression looking gently toward warm morning light, soft genuine smile",
+        cut2: "a pair of gentle, weathered human hands resting peacefully near a fresh olive branch on a sunlit raw stone surface",
+        topic: "peace, renewal, grace, olive branch, hope"
       }
-    };
+    ];
 
     let currentTechScore = 0;
     let hasUploadedImage = false;
@@ -470,7 +480,6 @@
 
     function init() {
       updateDetectedRef();
-      applyPresetFields();
       updateApiBadge();
     }
 
@@ -488,27 +497,136 @@
       }
     }
 
-    function applyPresetFields() {
-      const key = document.getElementById('presetSelect').value;
-      const p = PRESETS[key];
-      document.getElementById('customBg').value = p.bg;
-      document.getElementById('customCut1').value = p.cut1;
-      document.getElementById('customCut2').value = p.cut2;
-      document.getElementById('customTopic').value = p.topic;
-      buildLocalPrompts();
+    function parseEnglishBibleRef(rawInput) {
+      const text = (rawInput || "").trim();
+      if (!text) return "";
+
+      const engMatch = text.match(/\b([1-3]?\s?[A-Za-z]+(?:\s+of\s+[A-Za-z]+)?)\s+(\d+)/);
+      if (engMatch) {
+        const candidateBook = engMatch[1].trim();
+        const foundEng = BIBLE_BOOKS.find(b => b[1].toLowerCase() === candidateBook.toLowerCase() || (candidateBook.toLowerCase() === "psalms"));
+        if (foundEng) {
+          const bookName = candidateBook.toLowerCase() === "psalms" ? "Psalm" : foundEng[1];
+          return `${bookName} ${engMatch[2]}`;
+        }
+      }
+
+      for (const [kr, en] of BIBLE_BOOKS) {
+        const isShort = kr.length === 1;
+        const pattern = isShort ? new RegExp(`^${kr}\\s*(\\d+)`) : new RegExp(`${kr}\\s*(\\d+)`);
+        const m = text.match(pattern);
+        if (m) return `${en} ${m[1]}`;
+      }
+      return "";
+    }
+
+    function updateDetectedRef() {
+      const refVal = document.getElementById('verseRef').value;
+      const engRef = parseEnglishBibleRef(refVal);
+      const badge = document.getElementById('detectedRefBadge');
+      if (engRef) {
+        badge.textContent = `영문 제목 반영: ${engRef}`;
+        badge.className = "text-[11px] font-mono text-emerald-400";
+      } else if (refVal.trim()) {
+        badge.textContent = "성경 장절 미인식 (일반 제목 생성)";
+        badge.className = "text-[11px] font-mono text-slate-500";
+      } else {
+        badge.textContent = "출처 입력 시 영문 제목 반영";
+        badge.className = "text-[11px] font-mono text-slate-500";
+      }
+    }
+
+    function formatAdobeTitle(baseTitle, engBibleRef) {
+      let cleanBase = baseTitle.trim().replace(/\.$/, "");
+      if (engBibleRef && !cleanBase.toLowerCase().includes(engBibleRef.toLowerCase())) {
+        const suffix = ` inspired by biblical ${engBibleRef}`;
+        if ((cleanBase + suffix).length <= 200) {
+          cleanBase += suffix;
+        } else {
+          cleanBase = cleanBase.slice(0, 200 - suffix.length - 3).trim() + "..." + suffix;
+        }
+      }
+      return cleanBase.slice(0, 200);
+    }
+
+    // 본문 스마트 분석 엔진 (API 키 없이 작동)
+    function analyzePassageLocally(verseText, verseRef) {
+      const combined = `${verseRef} ${verseText}`.toLowerCase();
+      const scored = BIBLICAL_MOTIFS.map(motif => {
+        let score = 0;
+        const matchedWords = [];
+        for (const kw of motif.keywords) {
+          if (combined.includes(kw.toLowerCase())) {
+            score += kw.length >= 4 ? 2 : 1;
+            matchedWords.push(kw);
+          }
+        }
+        return { motif, score, matchedWords };
+      }).filter(item => item.score > 0).sort((a, b) => b.score - a.score);
+
+      if (scored.length === 0) {
+        return {
+          detectedLabels: ["기본 묵상 구도 (본문에서 구체적 사물 미감지 → 경건한 인물·손 구도 적용)"],
+          bg: "a serene ancient Middle Eastern stone courtyard bathed in warm natural afternoon sunlight, clean uncluttered raw sandstone background",
+          cut1: "an ancient Middle Eastern Jewish person looking thoughtfully with deep sincerity, reflection, and quiet faith, weathered natural skin, coarse unbleached linen tunic",
+          cut2: "a pair of weathered sun-tanned ancient human hands resting gently together over coarse linen fabric beside a sunlit raw stone ledge",
+          topic: "faith, reflection, devotion, prayer, biblical"
+        };
+      }
+
+      const primary = scored[0].motif;
+      const secondary = scored[1] ? scored[1].motif : null;
+
+      // 1순위 + 2순위 모티브를 자연스럽게 결합 (예: 경배 + 믿음/고난)
+      const labels = scored.slice(0, 3).map(s => `${s.motif.label} [${[...new Set(s.matchedWords)].slice(0, 3).join(', ')}]`);
+      const mergedTopic = [...new Set([
+        ...primary.topic.split(',').map(s => s.trim()),
+        ...(secondary ? secondary.topic.split(',').map(s => s.trim()) : [])
+      ])].slice(0, 5).join(', ');
+
+      return {
+        detectedLabels: labels,
+        bg: primary.bg,
+        cut1: primary.cut1,
+        cut2: (secondary && scored[1].score >= 2 && primary !== secondary) ? primary.cut2 : primary.cut2,
+        topic: mergedTopic
+      };
     }
 
     async function generatePrompts() {
+      const ref = document.getElementById('verseRef').value.trim();
+      const verse = document.getElementById('verseText').value.trim();
+
+      if (!verse && !ref) {
+        showToast("먼저 성경 출처나 성경 본문을 입력해 주세요!");
+        return;
+      }
+
       const apiKey = localStorage.getItem('gemini_api_key');
       if (apiKey) {
         await generateWithGemini(apiKey);
       } else {
-        buildLocalPrompts();
-        showToast("로컬 엔진으로 3단계 프롬프트가 생성되었습니다!");
+        const analysis = analyzePassageLocally(verse, ref);
+        document.getElementById('customBg').value = analysis.bg;
+        document.getElementById('customCut1').value = analysis.cut1;
+        document.getElementById('customCut2').value = analysis.cut2;
+        document.getElementById('customTopic').value = analysis.topic;
+
+        document.getElementById('themeSummaryBox').classList.remove('hidden');
+        document.getElementById('detectedThemesText').textContent = analysis.detectedLabels.join('  ·  ');
+        document.getElementById('fineTuneBox').classList.remove('hidden');
+
+        buildPromptsFromFields();
+        showToast("본문 분석 완료! 3단계 프롬프트가 생성되었습니다.");
       }
     }
 
-    function buildLocalPrompts() {
+    function applyCustomEdits() {
+      if (document.getElementById('resultsWrapper').classList.contains('hidden')) return;
+      buildPromptsFromFields();
+    }
+
+    function buildPromptsFromFields() {
       const bg = document.getElementById('customBg').value.trim();
       const c1 = document.getElementById('customCut1').value.trim();
       const c2 = document.getElementById('customCut2').value.trim();
@@ -518,7 +636,7 @@
       const cut1Steps = [
         {
           label: "Step 1 - Create the space and background",
-          text: `Create a 16:9 cinematic wide-angle background scene of ${bg}. On the left two-thirds of the frame, keep an uncluttered, open natural copy space featuring soft sunlit stone or dusty warm atmospheric tones. Shot on a 35mm lens with natural daylight, clean commercial stock photography aesthetic, no people, no text, no watermarks.`
+          text: `Create a 16:9 cinematic wide-angle background scene of ${bg}. On the left two-thirds of the frame, keep an uncluttered, open natural copy space featuring soft sunlit stone or warm atmospheric desert tones. Shot on a 35mm lens with natural daylight, clean commercial stock photography aesthetic, no people, no text, no watermarks.`
         },
         {
           label: "Step 2 - Place key materials",
@@ -537,7 +655,7 @@
         },
         {
           label: "Step 2 - Place key materials",
-          text: `Keep the exact stone surface, sunlight direction, and open upper-left copy space from the previous image. In the right-center foreground, place a close-up of ${c2}. Ensure both hands show anatomically clear, natural five-finger structure with realistic knuckles and fingernails in a natural relaxed grip.`
+          text: `Keep the exact stone surface, sunlight direction, and open upper-left copy space from the previous image. In the right-center foreground, place a close-up of ${c2}. Ensure both hands show anatomically clear, natural five-finger structure with realistic knuckles and fingernails in a natural relaxed posture.`
         },
         {
           label: "Step 3 - Expressing details and adding special effects",
@@ -568,6 +686,30 @@
 
       document.getElementById('cut1Keywords').textContent = [...new Set(baseKw1)].slice(0, 25).join(', ');
       document.getElementById('cut2Keywords').textContent = [...new Set(baseKw2)].slice(0, 25).join(', ');
+
+      showResultsPanel();
+    }
+
+    function showResultsPanel() {
+      document.getElementById('emptyResultState').classList.add('hidden');
+      document.getElementById('resultsWrapper').classList.remove('hidden');
+      const csvBtn = document.getElementById('csvBtn');
+      csvBtn.disabled = false;
+      csvBtn.className = "text-xs px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition cursor-pointer";
+    }
+
+    function resetAll() {
+      document.getElementById('verseRef').value = "";
+      document.getElementById('verseText').value = "";
+      updateDetectedRef();
+      document.getElementById('themeSummaryBox').classList.add('hidden');
+      document.getElementById('fineTuneBox').classList.add('hidden');
+      document.getElementById('resultsWrapper').classList.add('hidden');
+      document.getElementById('emptyResultState').classList.remove('hidden');
+      const csvBtn = document.getElementById('csvBtn');
+      csvBtn.disabled = true;
+      csvBtn.className = "text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-500 font-semibold transition cursor-not-allowed";
+      showToast("입력창과 결과창이 초기화되었습니다.");
     }
 
     function renderSteps(containerId, steps, prefix) {
@@ -600,9 +742,10 @@ CRITICAL RULES:
 - Cut 1: Emotional close-up of 1 ancient Middle Eastern person.
 - Cut 2: Close-up of weathered human hands & key object (zero face distortion risk).
 - Step 2 MUST start with "Keep the exact..." and Step 3 MUST start with "Preserve the exact..." for Flow multi-turn editing.
-- IMPORTANT FOR TITLE: If a Bible source is provided (${engRef || ref}), you MUST include the English Bible book name and chapter number (e.g., "${engRef || 'Exodus 5'}") naturally in BOTH Cut 1 and Cut 2 English Titles (under 200 chars).
+- IMPORTANT FOR TITLE: If a Bible source is provided (${engRef || ref}), you MUST include the English Bible book name and chapter number (e.g., "${engRef || 'Exodus 4'}") naturally in BOTH Cut 1 and Cut 2 English Titles (under 200 chars).
 Return STRICT JSON ONLY:
 {
+  "summary": "감지된 핵심 장면 요약 (한국어 1줄)",
   "cut1": { "step1": "...", "step2": "...", "step3": "...", "title": "...", "keywords": "25 comma-separated safe English keywords" },
   "cut2": { "step1": "...", "step2": "...", "step3": "...", "title": "...", "keywords": "25 comma-separated safe English keywords" }
 }`;
@@ -620,6 +763,9 @@ Return STRICT JSON ONLY:
         const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
         const parsed = JSON.parse(raw);
 
+        document.getElementById('themeSummaryBox').classList.remove('hidden');
+        document.getElementById('detectedThemesText').textContent = parsed.summary || "Gemini AI 문맥 분석 완료";
+
         renderSteps('cut1Steps', [
           { label: "Step 1 - Create the space and background", text: parsed.cut1.step1 },
           { label: "Step 2 - Place key materials", text: parsed.cut1.step2 },
@@ -635,10 +781,17 @@ Return STRICT JSON ONLY:
         document.getElementById('cut1Keywords').textContent = parsed.cut1.keywords;
         document.getElementById('cut2Title').textContent = formatAdobeTitle(parsed.cut2.title, engRef);
         document.getElementById('cut2Keywords').textContent = parsed.cut2.keywords;
+
+        showResultsPanel();
         showToast("Gemini AI 생성 완료!");
       } catch (e) {
-        alert("API 호출 오류가 발생하여 로컬 생성 모드로 대체합니다: " + e.message);
-        buildLocalPrompts();
+        alert("API 호출 오류가 발생하여 무료 로컬 분석 엔진으로 생성합니다: " + e.message);
+        const analysis = analyzePassageLocally(verse, ref);
+        document.getElementById('customBg').value = analysis.bg;
+        document.getElementById('customCut1').value = analysis.cut1;
+        document.getElementById('customCut2').value = analysis.cut2;
+        document.getElementById('customTopic').value = analysis.topic;
+        buildPromptsFromFields();
       }
     }
 
@@ -646,6 +799,10 @@ Return STRICT JSON ONLY:
       const ref = document.getElementById('verseRef').value;
       const engRef = parseEnglishBibleRef(ref);
       const verse = document.getElementById('verseText').value;
+      if (!verse && !ref) {
+        showToast("성경 출처 또는 본문을 먼저 입력하세요!");
+        return;
+      }
       const master = `Act as a top image artist and Adobe Stock compliance expert. Based on this Bible passage (${ref}${engRef ? ` / ${engRef}` : ''}):
 "${verse}"
 
@@ -655,7 +812,7 @@ Rules:
 2. Ancient Middle Eastern / Jewish realistic setting, natural copy space, 35mm lens, pin-sharp focus from foreground to background, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, perfect human hand with 5 natural fingers, 8k resolution, commercial stock photo.
 3. Cut 1: Emotional close-up of 1 person. Cut 2: Close-up of human hands & key object.
 4. Write Step 1 (Space & background), Step 2 (Keep the exact background... Place key materials), Step 3 (Preserve the exact composition... Expressing details & special effects) in English.
-5. Also provide Adobe Stock English Title (under 200 chars, MUST include the English Bible book and chapter number e.g. "${engRef || 'Exodus 5'}") and 25 safe English Keywords for each cut.`;
+5. Also provide Adobe Stock English Title (under 200 chars, MUST include the English Bible book and chapter number e.g. "${engRef || 'Exodus 4'}") and 25 safe English Keywords for each cut.`;
       navigator.clipboard.writeText(master);
       showToast("Gemini/ChatGPT 웹 복사용 마스터 요청문이 복사되었습니다!");
     }
@@ -841,7 +998,7 @@ Rules:
       document.getElementById('geminiApiKeyInput').value = '';
       updateApiBadge();
       toggleApiModal();
-      showToast("API 키가 삭제되어 무료 로컬 모드로 전환되었습니다.");
+      showToast("API 키가 삭제되어 무료 로컬 분석 모드로 전환되었습니다.");
     }
 
     function updateApiBadge() {
@@ -853,7 +1010,7 @@ Rules:
         badge.className = "text-xs px-2.5 py-1 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30";
         aiBtn.classList.remove('hidden');
       } else {
-        badge.textContent = "무료 로컬 모드 작동중";
+        badge.textContent = "무료 로컬 분석 엔진";
         badge.className = "text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30";
         aiBtn.classList.add('hidden');
       }
