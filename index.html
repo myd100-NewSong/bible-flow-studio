@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bible Flow Studio v0.1.6 — 본문 충실 · 16:9 황금비율 · 스톡 검수기</title>
+  <title>Bible Flow Studio v0.1.7 — 본문 충실 서사 직관형 · 스톡 검수기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
@@ -24,7 +24,7 @@
           <div class="flex items-center gap-2">
             <h1 class="text-lg font-bold tracking-tight text-white">Bible Flow Studio</h1>
             <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
-              v0.1.6
+              v0.1.7
             </span>
           </div>
           <p class="text-xs text-slate-400">본문 충실 서사 직관형 · 16:9 황금비율 배치 · Adobe Stock 95% 검수</p>
@@ -337,7 +337,7 @@
         <button onclick="toggleApiModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">
-        API 키 없이도 내장 분석 엔진과 마스터 요청문 복사로 충분히 사용 가능합니다. API 키를 쓰실 경우 표준 모델을 우선 선택해 연결합니다.
+        API 키를 연결하면 어떤 성경 구절이든 AI가 문맥을 100% 이해해 완벽하게 작성합니다. (무료 티어 제한 시에는 마스터 요청문 복사 버튼을 활용해 주세요.)
       </p>
       <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1">Gemini API Key</label>
@@ -405,40 +405,207 @@
       ["몬", "Philemon"], ["히", "Hebrews"], ["약", "James"], ["유", "Jude"], ["계", "Revelation"]
     ];
 
+    // exactWord: true면 영문 단어 경계(\b)와 문맥을 엄격히 검사하여 "was well again" 같은 오인식 원천 차단
     const CONCRETE_ELEMENTS = [
-      { keys: ["snake", "serpent", "뱀"], chip: "#땅 위의 뱀", obj: "a realistic desert snake coiled on dusty sunlit ground", kw: "snake" },
-      { keys: ["stick", "staff", "rod", "지팡이", "막대기"], chip: "#나무 지팡이", obj: "a rough, natural wooden shepherd stick", kw: "wooden stick" },
-      { keys: ["throw", "threw", "ground", "floor", "dust", "던지", "땅에", "바닥", "먼지"], chip: "#거친 흙바닥·던짐", bg: "a sun-baked ancient Middle Eastern dry earth and dusty desert ground under crisp afternoon light", handPose: "hands reaching or reacting over sunlit dusty desert earth", kw: "desert ground" },
-      { keys: ["ran", "fear", "afraid", "tremble", "놀라", "피하", "두려", "도망"], chip: "#놀람·물러서는 동작", emotion: "stepping back suddenly with wide startled eyes and tense alarm", kw: "alarm" },
-      { keys: ["catch", "tail", "grab", "hold", "잡으라", "잡았", "꼬리"], chip: "#손으로 잡는 동작", handPose: "a weathered human hand carefully reaching out to grab the object on the ground", kw: "grasping hand" },
-      { keys: ["bush", "thorn", "fire", "flame", "burn", "떨기나무", "불꽃", "불"], chip: "#불타는 떨기나무·불꽃", obj: "a weathered desert thorn bush burning with bright warm golden flames", kw: "burning bush" },
-      { keys: ["brick", "mud", "clay", "straw", "벽돌", "진흙", "짚"], chip: "#진흙 벽돌·마른 짚", obj: "a rough wooden brick mold, wet clay mud, and sparse broken dry straw", kw: "mudbrick" },
-      { keys: ["worship", "bow", "heads down", "kneel", "경배", "머리 숙", "엎드려", "절하"], chip: "#머리 숙인 경배", emotion: "with head gently bowed and eyes softly closed in deep reverence and worship", handPose: "hands humbly pressed together in quiet reverence", kw: "worship" },
-      { keys: ["pray", "supplication", "ask", "기도", "간구", "부르짖"], chip: "#간절한 기도", emotion: "looking slightly skyward in earnest, sincere silent prayer", handPose: "weathered hands folded gently in earnest prayer", kw: "prayer" },
-      { keys: ["believe", "faith", "sign", "wonder", "trust", "믿었", "믿음", "표적", "이적"], chip: "#믿음·경외의 시선", emotion: "gazing forward with awe-struck eyes filled with deep belief and conviction", handPose: "hands held steadily in resolute trust", kw: "faith" },
-      { keys: ["sorry", "mercy", "hard life", "cry", "tear", "suffer", "고난", "불쌍", "긍휼", "눈물", "슬픔"], chip: "#애절한 눈빛·눈물", emotion: "with deeply expressive glistening eyes filled with sorrow and quiet endurance", handPose: "calloused hands resting gently over the heart on coarse linen", kw: "sorrow" },
-      { keys: ["sword", "spear", "shield", "war", "soldier", "칼", "창", "방패", "전쟁", "군사"], chip: "#고대 검·방패", obj: "an ancient weathered bronze sword and leather shield resting on raw stone", kw: "ancient sword" },
-      { keys: ["blood", "crimson", "피", "핏방울"], chip: "#붉은 흔적·상징", obj: "a rough wooden lintel stained with deep crimson liquid beside hyssop branches", kw: "crimson" },
-      { keys: ["shepherd", "sheep", "lamb", "flock", "목자", "양", "어린 양"], chip: "#목자·양털", obj: "soft natural sheep wool beside a rustic wooden shepherd staff", kw: "shepherd" },
-      { keys: ["pasture", "grass", "field", "초장", "풀밭", "들판", "밭"], chip: "#푸른 초장·들판", bg: "sunlit ancient Judean grassy hills and open valley pasture under warm morning light", kw: "pasture" },
-      { keys: ["well", "water", "river", "stream", "jar", "우물", "물", "강", "시냇", "물동이"], chip: "#돌우물·흙 물동이", obj: "a handmade weathered clay water jar resting on a sunlit raw stone well edge", kw: "clay jar" },
-      { keys: ["sea", "boat", "ship", "storm", "wave", "fish", "net", "바다", "배", "풍랑", "그물"], chip: "#바다·나무배·그물", bg: "an ancient rocky shoreline by sunlit waters at dawn with weathered timber dock edges", obj: "thick woven natural hemp rope and coarse fishing net on weathered boat timber", kw: "fishing net" },
-      { keys: ["bread", "loaf", "barley", "떡", "빵", "보리"], chip: "#거친 보리빵", obj: "a rustic baked coarse barley bread loaf being gently broken", kw: "barley bread" },
-      { keys: ["wine", "cup", "chalice", "포도주", "잔"], chip: "#토기 잔·포도주", obj: "a humble handmade earthenware cup on a weathered wood and stone table", kw: "earthenware cup" },
-      { keys: ["seed", "sow", "wheat", "grain", "harvest", "씨", "밀", "추수"], chip: "#밀 씨앗·거친 흙", obj: "golden wheat seeds cupped in palms above dark dry fertile soil", kw: "wheat seeds" },
-      { keys: ["scroll", "book", "law", "word", "write", "두루마리", "책", "율법", "말씀"], chip: "#양피지 두루마리", obj: "an aged blank parchment scroll gently unrolled on raw limestone", kw: "ancient scroll" },
-      { keys: ["lamp", "light", "candle", "dawn", "등불", "등잔", "빛", "새벽"], chip: "#토기 등잔·불빛", obj: "a small handmade terracotta olive oil lamp with a warm steady flame", kw: "oil lamp" },
-      { keys: ["mountain", "hill", "rock", "stone", "altar", "산", "언덕", "바위", "돌", "제단"], chip: "#거친 사암 반석", bg: "a rugged sunlit ancient Middle Eastern rocky mountainside with weathered raw limestone boulders", obj: "sun-baked raw sandstone rocks stacked naturally", kw: "raw stone" },
-      { keys: ["desert", "wilderness", "sand", "journey", "way", "광야", "사막", "여정", "길"], chip: "#사막 광야길", bg: "an expansive arid desert wilderness trail bathed in warm golden afternoon sunlight", kw: "desert" },
-      { keys: ["olive", "vine", "branch", "fig", "감람", "올리브", "포도나무", "무화과"], chip: "#올리브·포도 가지", obj: "a fresh olive branch with silvery-green leaves resting on sunlit stone", kw: "olive branch" },
-      { keys: ["sandal", "foot", "feet", "wash", "신발", "발", "씻"], chip: "#가죽 신발·물그릇", obj: "worn ancient leather sandals beside a stone basin of clear water", kw: "leather sandals" },
-      { keys: ["tent", "house", "door", "장막", "천막", "집", "문"], chip: "#고대 천막·돌집", bg: "the sunlit entrance of an ancient woven goat-hair desert tent and raw stone courtyard", kw: "ancient tent" },
-      { keys: ["palace", "king", "throne", "pharaoh", "궁", "왕", "보좌", "바로"], chip: "#고대 석조 회랑", bg: "a grand sunlit ancient Middle Eastern carved sandstone pillar courtyard with long afternoon shadows", kw: "ancient pillars" }
+      {
+        keys: ["inside your clothes", "near to your heart", "white as snow", "leprosy", "품에 넣", "품 속", "눈처럼 희", "나병", "문둥병"],
+        chip: "#품 속의 손·눈처럼 희어진 손",
+        bg: "a sun-lit ancient Middle Eastern rough sandstone courtyard with warm desert daylight",
+        emotion: "looking down in stunned awe at his own hand as he pulls it out from inside his coarse linen tunic near his chest",
+        handPose: "a weathered human hand emerging from inside a coarse unbleached linen robe at the chest, appearing starkly pale white as snow contrasting against sun-tanned skin",
+        obj: "the folds of a coarse unbleached ancient linen tunic near the chest",
+        kw: "pale hand"
+      },
+      {
+        keys: ["snake", "serpent", "뱀"],
+        chip: "#땅 위의 뱀",
+        obj: "a realistic desert snake coiled on dusty sunlit ground",
+        kw: "snake"
+      },
+      {
+        keys: ["stick", "staff", "rod", "지팡이", "막대기"],
+        exact: true,
+        chip: "#나무 지팡이",
+        obj: "a rough, natural wooden shepherd stick",
+        kw: "wooden stick"
+      },
+      {
+        keys: ["throw", "threw", "ground", "floor", "dust", "던지", "땅에", "바닥", "먼지"],
+        exact: true,
+        chip: "#거친 흙바닥·던짐",
+        bg: "a sun-baked ancient Middle Eastern dry earth and dusty desert ground under crisp afternoon light",
+        handPose: "hands reaching or reacting over sunlit dusty desert earth",
+        kw: "desert ground"
+      },
+      {
+        keys: ["ran from", "fear", "afraid", "tremble", "놀라", "피하", "두려", "도망"],
+        chip: "#놀람·물러서는 동작",
+        emotion: "stepping back suddenly with wide startled eyes and tense alarm",
+        kw: "alarm"
+      },
+      {
+        keys: ["catch", "tail", "grab", "잡으라", "잡았", "꼬리"],
+        exact: true,
+        chip: "#손으로 잡는 동작",
+        handPose: "a weathered human hand carefully reaching out to grab the object on the ground",
+        kw: "grasping hand"
+      },
+      {
+        keys: ["bush", "thorn", "fire", "flame", "burn", "떨기나무", "불꽃", "불"],
+        exact: true,
+        chip: "#불타는 떨기나무·불꽃",
+        obj: "a weathered desert thorn bush burning with bright warm golden flames",
+        kw: "burning bush"
+      },
+      {
+        keys: ["brick", "mud", "clay", "straw", "벽돌", "진흙", "짚"],
+        exact: true,
+        chip: "#진흙 벽돌·마른 짚",
+        obj: "a rough wooden brick mold, wet clay mud, and sparse broken dry straw",
+        kw: "mudbrick"
+      },
+      {
+        keys: ["worship", "bow", "heads down", "kneel", "경배", "머리 숙", "엎드려", "절하"],
+        exact: true,
+        chip: "#머리 숙인 경배",
+        emotion: "with head gently bowed and eyes softly closed in deep reverence and worship",
+        handPose: "hands humbly pressed together in quiet reverence",
+        kw: "worship"
+      },
+      {
+        keys: ["pray", "prayer", "supplication", "기도", "간구", "부르짖"],
+        exact: true,
+        chip: "#간절한 기도",
+        emotion: "looking slightly skyward in earnest, sincere silent prayer",
+        handPose: "weathered hands folded gently in earnest prayer",
+        kw: "prayer"
+      },
+      {
+        keys: ["believed", "believe", "faith", "sign", "wonder", "믿었", "믿음", "표적", "이적"],
+        exact: true,
+        chip: "#믿음·경외의 시선",
+        emotion: "gazing forward with awe-struck eyes filled with deep belief and conviction",
+        kw: "faith"
+      },
+      {
+        keys: ["mercy", "hard life", "cry", "tear", "suffer", "고난", "불쌍", "긍휼", "눈물", "슬픔"],
+        exact: true,
+        chip: "#애절한 눈빛·눈물",
+        emotion: "with deeply expressive glistening eyes filled with sorrow and quiet endurance",
+        kw: "sorrow"
+      },
+      {
+        keys: ["sword", "spear", "shield", "war", "soldier", "칼", "창", "방패", "전쟁", "군사"],
+        exact: true,
+        chip: "#고대 검·방패",
+        obj: "an ancient weathered bronze sword and leather shield resting on raw stone",
+        kw: "ancient sword"
+      },
+      {
+        keys: ["blood", "crimson", "피", "핏방울"],
+        exact: true,
+        chip: "#붉은 흔적·상징",
+        obj: "a rough wooden lintel stained with deep crimson liquid beside hyssop branches",
+        kw: "crimson"
+      },
+      {
+        keys: ["shepherd", "sheep", "lamb", "flock", "목자", "양", "어린 양"],
+        exact: true,
+        chip: "#목자·양털",
+        obj: "soft natural sheep wool beside a rustic wooden shepherd staff",
+        kw: "shepherd"
+      },
+      {
+        keys: ["pasture", "grass", "field", "초장", "풀밭", "들판", "밭"],
+        exact: true,
+        chip: "#푸른 초장·들판",
+        bg: "sunlit ancient Judean grassy hills and open valley pasture under warm morning light",
+        kw: "pasture"
+      },
+      {
+        keys: ["water well", "draw water", "by the well", "jacob's well", "water jar", "river", "stream", "우물", "물동이", "강물", "시냇"],
+        chip: "#돌우물·흙 물동이",
+        obj: "a handmade weathered clay water jar resting on a sunlit raw stone well edge",
+        kw: "clay jar"
+      },
+      {
+        keys: ["sea", "boat", "ship", "storm", "wave", "fish", "fishing net", "바다", "배", "풍랑", "그물"],
+        exact: true,
+        chip: "#바다·나무배·그물",
+        bg: "an ancient rocky shoreline by sunlit waters at dawn with weathered timber dock edges",
+        obj: "thick woven natural hemp rope and coarse fishing net on weathered boat timber",
+        kw: "fishing net"
+      },
+      {
+        keys: ["bread", "loaf", "barley", "떡", "빵", "보리"],
+        exact: true,
+        chip: "#거친 보리빵",
+        obj: "a rustic baked coarse barley bread loaf being gently broken",
+        kw: "barley bread"
+      },
+      {
+        keys: ["wine", "cup", "chalice", "포도주", "잔"],
+        exact: true,
+        chip: "#토기 잔·포도주",
+        obj: "a humble handmade earthenware cup on a weathered wood and stone table",
+        kw: "earthenware cup"
+      },
+      {
+        keys: ["seed", "sow", "wheat", "grain", "harvest", "씨", "밀", "추수"],
+        exact: true,
+        chip: "#밀 씨앗·거친 흙",
+        obj: "golden wheat seeds cupped in palms above dark dry fertile soil",
+        kw: "wheat seeds"
+      },
+      {
+        keys: ["scroll", "book", "law", "write", "두루마리", "율법"],
+        exact: true,
+        chip: "#양피지 두루마리",
+        obj: "an aged blank parchment scroll gently unrolled on raw limestone",
+        kw: "ancient scroll"
+      },
+      {
+        keys: ["lamp", "candle", "oil lamp", "등불", "등잔"],
+        exact: true,
+        chip: "#토기 등잔·불빛",
+        obj: "a small handmade terracotta olive oil lamp with a warm steady flame",
+        kw: "oil lamp"
+      },
+      {
+        keys: ["mountain", "hill", "rock", "stone", "altar", "산", "언덕", "바위", "돌", "제단"],
+        exact: true,
+        chip: "#거친 사암 반석",
+        bg: "a rugged sunlit ancient Middle Eastern rocky mountainside with weathered raw limestone boulders",
+        obj: "sun-baked raw sandstone rocks stacked naturally",
+        kw: "raw stone"
+      },
+      {
+        keys: ["desert", "wilderness", "sand", "광야", "사막"],
+        exact: true,
+        chip: "#사막 광야길",
+        bg: "an expansive arid desert wilderness trail bathed in warm golden afternoon sunlight",
+        kw: "desert"
+      },
+      {
+        keys: ["olive", "vine", "branch", "fig", "감람", "올리브", "포도나무", "무화과"],
+        exact: true,
+        chip: "#올리브·포도 가지",
+        obj: "a fresh olive branch with silvery-green leaves resting on sunlit stone",
+        kw: "olive branch"
+      },
+      {
+        keys: ["sandal", "foot", "feet", "wash", "신발", "발", "씻"],
+        exact: true,
+        chip: "#가죽 신발·물그릇",
+        obj: "worn ancient leather sandals beside a stone basin of clear water",
+        kw: "leather sandals"
+      }
     ];
 
     const FLOW_SAFETY_REPLACEMENTS = [
       { regex: /\bJewish\b/gi, safe: "Eastern Mediterranean", reason: "민족/종교 키워드(Jewish) → 역사적 지역 표현으로 순화" },
       { regex: /\bslave(s|ry)?\b/gi, safe: "ancient laborer", reason: "민감 단어(slave) → 고대 노동자로 순화" },
+      { regex: /\b(leprosy|illness|disease|infected)\b/gi, safe: "pale weathered contrast", reason: "질병 표현(leprosy/illness) → 창백한 피부 명암 대비로 순화" },
       { regex: /\bblood(y)?\b/gi, safe: "deep crimson liquid", reason: "유혈 표현(blood) → 붉은 액체로 순화" },
       { regex: /\b(snake|serpent)s?\b/gi, safe: "curved desert wooden stick", reason: "위협 생물(snake/serpent) → 나무 지팡이로 순화" },
       { regex: /\b(hit|beating|attack|kill|wound|scar|bleed)ing?\b/gi, safe: "weathered", reason: "폭력/상처 단어 → 세월의 흔적으로 순화" },
@@ -524,13 +691,24 @@
       return cleanBase.slice(0, 200);
     }
 
+    function matchKeyword(textLower, key, exact) {
+      const k = key.toLowerCase();
+      // 영문자/숫자로만 이루어진 단어이면서 exact: true인 경우 단어 경계(\b) 엄격 검사
+      if (exact && /^[a-z0-9\s]+$/.test(k)) {
+        const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+        return regex.test(textLower);
+      }
+      return textLower.includes(k);
+    }
+
     function extractConcreteElements(ref, verse) {
       const combined = `${ref} ${verse}`.toLowerCase();
       const matched = [];
       for (const el of CONCRETE_ELEMENTS) {
         let hits = 0;
         for (const k of el.keys) {
-          if (combined.includes(k.toLowerCase())) hits++;
+          if (matchKeyword(combined, k, el.exact)) hits++;
         }
         if (hits > 0) matched.push({ ...el, hits });
       }
@@ -552,9 +730,9 @@
 
     function extractCleanEnglishNarrative(verse) {
       const cleaned = verse.replace(/\d+\./g, ' ').replace(/\s+/g, ' ').trim();
-      const isMostlyEnglish = /^[A-Za-z0-9\s.,'"?!:;()\-—]+$/.test(cleaned);
-      if (!isMostlyEnglish || cleaned.length < 10) return "";
-      return cleaned.slice(0, 220);
+      const asciiRatio = (cleaned.match(/[A-Za-z]/g) || []).length / Math.max(1, cleaned.length);
+      if (asciiRatio < 0.5 || cleaned.length < 10) return "";
+      return cleaned.slice(0, 280);
     }
 
     async function generateLiteralPrompts() {
@@ -582,7 +760,7 @@
       }
     }
 
-    // 본문 충실 서사 직관형 + 16:9 황금비율 구도 (카피스페이스 완전 삭제)
+    // 본문 직결형 (어설픈 사물 추측 대신 본문 문맥 + 검증된 요소만 직결)
     function buildLiteralNarrativeLocally(ref, verse, extracted) {
       const bgs = extracted.filter(e => e.bg);
       const objs = extracted.filter(e => e.obj);
@@ -590,46 +768,45 @@
       const hands = extracted.filter(e => e.handPose);
       const kws = extracted.map(e => e.kw).filter(Boolean);
 
-      const primaryBg = bgs[0]?.bg || "an authentic ancient Middle Eastern sunlit desert ground and weathered raw sandstone setting";
-      const allObjsList = objs.map(o => o.obj);
-      const combinedObjs = allObjsList.length > 0
-        ? allObjsList.slice(0, 2).join(" and ")
-        : "an authentic ancient Middle Eastern wooden or clay biblical object resting on raw stone";
+      const primaryBg = bgs[0]?.bg || "an authentic ancient Middle Eastern sunlit rough sandstone setting with natural desert atmosphere";
+      const objClause = objs.length > 0
+        ? `featuring ${objs.slice(0, 2).map(o => o.obj).join(" and ")}`
+        : `wearing coarse unbleached ancient linen clothing`;
 
-      const primaryEmotion = emotions[0]?.emotion || "looking intently with earnest emotion matching the exact moment of the passage";
-      const primaryHand = hands[0]?.handPose || `weathered human hands actively interacting near ${combinedObjs}`;
+      const primaryEmotion = emotions[0]?.emotion || "showing authentic facial emotion directly reflecting the passage";
+      const primaryHand = hands[0]?.handPose || "weathered human hands performing the exact action described in the text";
       const engNarrative = extractCleanEnglishNarrative(verse);
 
       const chips = [
         ...extracted.slice(0, 4).map(e => e.chip),
-        "#16:9 황금비율",
-        "#고대 중동 실사"
+        "#본문 직결 서사",
+        "#16:9 황금비율"
       ].slice(0, 6);
 
       const cleanLabels = extracted.slice(0, 4).map(e => e.chip.replace('#', '')).join(', ');
       const guideText = extracted.length > 0
-        ? `이 구절의 텍스트 그대로 <strong>[${cleanLabels}]</strong> 요소가 중심이 되어, 16:9 화면의 <strong>황금비율(Golden Ratio)</strong>에 맞춰 배치된 <strong>인물·사건 클로즈업(Cut 1)</strong>과 <strong>손·핵심 사물 클로즈업(Cut 2)</strong> 이미지가 생성됩니다.`
-        : `입력하신 구절의 문맥에 맞춰 <strong>[고대 중동 배경, 인물의 진실된 표정, 손과 핵심 사물]</strong>이 16:9 황금비율 구도로 조화롭게 배치된 실사 이미지가 생성됩니다.`;
+        ? `이 구절의 텍스트 그대로 <strong>[${cleanLabels}]</strong> 키워드와 입력된 본문 문맥이 16:9 황금비율 구도 안에 그대로 반영된 <strong>인물·사건(Cut 1)</strong>과 <strong>손·행동(Cut 2)</strong> 이미지가 생성됩니다.`
+        : `입력하신 본문 텍스트 문맥 자체를 Flow에 직접 전달하여 <strong>[16:9 황금비율, 고대 중동 실사, 본문 그대로의 인물 표정과 손동작]</strong> 이미지가 생성됩니다.<br/><span class="text-sky-300">💡 한글 본문의 경우 더 정밀한 번역을 원하시면 [📋 무료 웹용 마스터 요청문 복사]를 함께 활용하세요.</span>`;
 
       const narrativeClause = engNarrative
-        ? ` Faithfully depict the exact moment described here: "${engNarrative}".`
+        ? ` Strictly depict this exact biblical narrative scene: "${engNarrative}".`
         : "";
 
       const cut1 = [
-        `Create a 16:9 cinematic wide-angle background scene of ${primaryBg}, composed with balanced Golden Ratio spatial depth, natural horizon lines, and rich authentic environmental texture across the entire frame. Shot on a 35mm lens with natural daylight, clean commercial stock photography aesthetic, no people, no text, no watermarks.`,
-        `Keep the exact background, sunlight direction, and 16:9 framing from the previous image. Position the main character at the Golden Ratio focal intersection (1:1.618 visual anchor) of the 16:9 frame: a close-up shot of an ancient Middle Eastern man ${primaryEmotion}, wearing coarse unbleached linen clothing, with ${combinedObjs} naturally integrated along the Golden Ratio leading line.${narrativeClause} Ensure facial anatomy, eyes, nose, and posture are completely realistic and undistorted.`,
-        `Preserve the exact Golden Ratio character placement, composition, objects, and facial anatomy from the previous step. Enhance to ultra-detailed 8k photorealistic commercial stock photo quality shot on a 35mm lens. Render pin-sharp focus from foreground to background with realistic skin pores, authentic coarse fabric grain, ultra-detailed raw stone texture, natural golden sunlight rim lighting, and subtle floating dust motes, completely free of artifacts.`
+        `Create a 16:9 cinematic wide-angle background scene of ${primaryBg}, composed with balanced Golden Ratio spatial depth and authentic environmental texture across the entire frame. Shot on a 35mm lens with natural daylight, clean commercial stock photography aesthetic, no people, no text, no watermarks.`,
+        `Keep the exact background, sunlight direction, and 16:9 framing from the previous image. Position the main character at the Golden Ratio focal intersection (1:1.618 visual anchor) of the 16:9 frame: a close-up shot of an ancient Middle Eastern man ${primaryEmotion}, ${objClause}.${narrativeClause} Ensure facial anatomy, eyes, nose, and posture are completely realistic and undistorted.`,
+        `Preserve the exact Golden Ratio character placement, composition, and facial anatomy from the previous step. Enhance to ultra-detailed 8k photorealistic commercial stock photo quality shot on a 35mm lens. Render pin-sharp focus from foreground to background with realistic skin pores, authentic coarse fabric grain, ultra-detailed raw stone texture, natural golden sunlight rim lighting, and subtle floating dust motes, completely free of artifacts.`
       ];
 
       const cut2 = [
-        `Create a 16:9 realistic ground-level background scene matching ${primaryBg}, framed with balanced Golden Ratio diagonal depth across weathered raw stone and dry earth surfaces under crisp directional daylight. Shot on a 35mm lens, commercial stock photo style, no people, no text, no logos.`,
-        `Keep the exact ground surface, sunlight direction, and 16:9 framing from the previous image. Place the focal subject at the Golden Ratio intersection of the 16:9 frame: a close-up of ${primaryHand} together with ${combinedObjs}.${narrativeClause} Ensure human hands show anatomically clear, natural five-finger structure with realistic knuckles and fingernails.`,
-        `Preserve the exact Golden Ratio composition, hand anatomy, five natural fingers, and objects from the previous step. Elevate to ultra-detailed 8k photorealistic commercial stock photography shot on a 35mm lens with pin-sharp focus from foreground to background. Emphasize realistic skin pores, weathered knuckles, ultra-detailed raw stone and earth texture, authentic coarse fabric grain at the wrists, natural directional sunlight highlights, and zero artifacts.`
+        `Create a 16:9 realistic close-range background scene matching ${primaryBg}, framed with balanced Golden Ratio diagonal depth across weathered raw stone and natural ancient linen tones under crisp directional daylight. Shot on a 35mm lens, commercial stock photo style, no people, no text, no logos.`,
+        `Keep the exact background tone, sunlight direction, and 16:9 framing from the previous image. Place the focal subject at the Golden Ratio intersection of the 16:9 frame: a close-up of ${primaryHand} ${objs.length > 0 ? `with ${objs[0].obj}` : ''}.${narrativeClause} Ensure human hands show anatomically clear, natural five-finger structure with realistic knuckles and fingernails.`,
+        `Preserve the exact Golden Ratio composition, hand anatomy, five natural fingers, and narrative details from the previous step. Elevate to ultra-detailed 8k photorealistic commercial stock photography shot on a 35mm lens with pin-sharp focus from foreground to background. Emphasize realistic skin pores, weathered knuckles, ultra-detailed raw stone texture, authentic coarse fabric grain, natural directional sunlight highlights, and zero artifacts.`
       ];
 
       const topicArr = [...new Set([...kws, "biblical", "ancient Middle East", "faith"])];
-      const title1 = `Close up of ancient Middle Eastern man with ${allObjsList[0] ? allObjsList[0].replace(/^a\s+/, '') : 'biblical expression'} in Golden Ratio composition`;
-      const title2 = `Close up of weathered human hands with ${combinedObjs.replace(/^a\s+/, '')} in ancient Middle East`;
+      const title1 = `Close up of ancient Middle Eastern man in Golden Ratio composition depicting biblical moment`;
+      const title2 = `Close up of weathered human hands in ancient Middle East depicting biblical narrative`;
 
       return { chips, guideText, cut1, cut2, title1, title2, topicArr };
     }
@@ -729,9 +906,9 @@
 
       const engRef = parseEnglishBibleRef(ref);
       const prompt = `You are a top visual storytelling artist and Adobe Stock prompt engineer.
-Analyze this EXACT Bible passage (${ref || 'Bible Passage'}: "${verse}") and create ONE direct, literal narrative concept ("본문 충실 서사 직관형") staying 100% FAITHFUL to the literal objects, creatures, actions, and emotions in the text (DO NOT pre-sanitize).
+Analyze this EXACT Bible passage (${ref || 'Bible Passage'}: "${verse}") and create ONE direct, literal narrative concept ("본문 충실 서사 직관형") staying 100% FAITHFUL to the literal objects, actions, and emotions in the text (DO NOT pre-sanitize).
 CRITICAL COMPOSITION RULE:
-- NO copy space / NO empty negative space bias. Fill the 16:9 frame naturally and place the character and focal objects using the **Golden Ratio (1:1.618 focal intersection)** in a balanced 16:9 composition.
+- NO copy space. Place the character and key subjects at the **Golden Ratio (1:1.618 focal intersection)** in a balanced 16:9 composition.
 Produce:
 1) "chips": 5 short Korean hashtag keywords describing the generated image elements.
 2) "guideText": 1-2 Korean sentences explaining what image will be generated from these keywords.
@@ -906,7 +1083,7 @@ Return STRICT JSON ONLY:
       const master = `Act as a top image artist and Adobe Stock prompt engineer. Based strictly on this Bible passage (${ref}${engRef ? ` / ${engRef}` : ''}):
 "${verse}"
 
-Create ONE literal, faithful biblical narrative concept ("본문 충실 서사 직관형") — DO NOT pre-sanitize objects or creatures mentioned in the text.
+Create ONE literal, faithful biblical narrative concept ("본문 충실 서사 직관형") — DO NOT pre-sanitize objects or actions mentioned in the text.
 NO copy space. Place the character and key subjects at the Golden Ratio (1:1.618) focal intersection within a balanced 16:9 frame.
 First, briefly explain with 5 Korean keywords what image will be generated.
 Then output Flow 3-step prompts (Step 1 Space & background, Step 2 Keep exact background... Place literal materials/event at Golden Ratio focal point, Step 3 Preserve exact composition... 8k details) for:
