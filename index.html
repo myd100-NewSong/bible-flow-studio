@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bible Flow Studio v0.1.8 — 본문·이미지 샘플 3단계 프롬프트 & 스톡 검수기</title>
+  <title>Bible Flow Studio v0.1.1 — 본문 충실 프롬프트 · Reverse Prompting · 승인 검수</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
@@ -24,10 +24,10 @@
           <div class="flex items-center gap-2">
             <h1 class="text-lg font-bold tracking-tight text-white">Bible Flow Studio</h1>
             <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
-              v0.1.8
+              v0.1.1
             </span>
           </div>
-          <p class="text-xs text-slate-400">본문 충실 서사 · 이미지 샘플 역산 · 16:9 황금비율 · Adobe Stock 95% 검수</p>
+          <p class="text-xs text-slate-400">본문 충실 프롬프트 · Reverse Prompting · 16:9 황금비율 · 승인 검수</p>
         </div>
       </div>
 
@@ -46,13 +46,13 @@
   <div class="max-w-7xl mx-auto px-4 pt-5">
     <div class="inline-flex flex-wrap rounded-xl bg-slate-900 p-1 border border-slate-800 gap-1">
       <button id="tabBtn1" onclick="switchTab(1)" class="px-4 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-slate-950 transition">
-        1. 본문 충실 서사 프롬프트
+        1. 본문 충실 프롬프트
       </button>
       <button id="tabBtn2" onclick="switchTab(2)" class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition">
-        2. 이미지 샘플 → 프롬프트 역산
+        2. Reverse Prompting
       </button>
       <button id="tabBtn3" onclick="switchTab(3)" class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition">
-        3. 어도비 스톡 95% 검수기
+        3. 승인 검수
       </button>
     </div>
   </div>
@@ -65,7 +65,7 @@
       <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
         <div class="flex items-start justify-between gap-2">
           <div>
-            <h2 class="text-base font-bold text-amber-400 mb-1">말씀 입력 (서사 직관형)</h2>
+            <h2 class="text-base font-bold text-amber-400 mb-1">본문 충실 프롬프트</h2>
             <p class="text-xs text-slate-400">성경 구절을 순화 없이 그대로 반영해 16:9 황금비율 구도로 프롬프트를 작성합니다.</p>
           </div>
           <button onclick="resetAll()" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0">
@@ -90,7 +90,7 @@
 
         <div class="grid grid-cols-1 gap-2.5 pt-1">
           <button id="generateBtn" onclick="generateLiteralPrompts()" class="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/10">
-            ✨ 본문 충실 서사 직관형 프롬프트 생성
+            ✨ 본문 충실 프롬프트 생성
           </button>
           <button onclick="copyMasterMetaPrompt()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition">
             📋 무료 Gemini/ChatGPT 웹용 마스터 요청문 복사
@@ -117,7 +117,7 @@
           <h3 class="text-base font-bold text-slate-200">프롬프트 창이 비어 있습니다</h3>
           <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
             왼쪽에 <strong>성경 출처</strong>와 <strong>본문</strong>을 입력한 뒤<br/>
-            <span class="text-amber-400 font-semibold">[✨ 본문 충실 서사 직관형 프롬프트 생성]</span>을 누르시면,<br/>
+            <span class="text-amber-400 font-semibold">[✨ 본문 충실 프롬프트 생성]</span>을 누르시면,<br/>
             16:9 황금비율 구도의 Flow 3단계 프롬프트가 즉시 작성됩니다.
           </p>
         </div>
@@ -227,7 +227,7 @@
     </div>
   </main>
 
-  <!-- TAB 2: IMAGE SAMPLE TO 3-STEP PROMPT -->
+  <!-- TAB 2: REVERSE PROMPTING -->
   <main id="tab2" class="hidden max-w-7xl mx-auto px-4 py-6 space-y-6">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
@@ -236,8 +236,8 @@
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
           <div class="flex items-start justify-between">
             <div>
-              <h2 class="text-base font-bold text-amber-400 mb-1">이미지 샘플 업로드</h2>
-              <p class="text-xs text-slate-400">참고할 샘플 사진을 올리면 그 이미지 그대로 Flow 3단계 프롬프트를 역산 작성합니다.</p>
+              <h2 class="text-base font-bold text-amber-400 mb-1">Reverse Prompting</h2>
+              <p class="text-xs text-slate-400">참고할 샘플 이미지를 올리면 그 이미지 그대로 Flow 3단계 프롬프트를 역산 작성합니다.</p>
             </div>
             <button onclick="resetSampleTab()" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0">초기화</button>
           </div>
@@ -255,7 +255,7 @@
             <div id="sampleAutoVisualInfo" class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-1"></div>
           </div>
 
-          <!-- Sample Description Helper (Works even without API) -->
+          <!-- Sample Description Helper -->
           <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-sky-400">샘플 장면 요소 (API 없을 때 직접 지정 가능)</span>
@@ -279,7 +279,7 @@
 
           <div class="grid grid-cols-1 gap-2">
             <button id="sampleGenerateBtn" onclick="generatePromptFromSample()" class="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/10">
-              ✨ 이미지 샘플 → 3단계 프롬프트 작성
+              ✨ Reverse Prompting 실행
             </button>
             <button onclick="copySampleWebPrompt()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition">
               📋 샘플 이미지와 함께 Gemini/ChatGPT 웹에 붙일 요청문 복사
@@ -293,10 +293,10 @@
       <section class="lg:col-span-7 space-y-5">
         <div id="sampleEmptyState" class="bg-slate-900 border border-dashed border-slate-800 rounded-2xl p-14 text-center space-y-3">
           <div class="text-4xl">🎨</div>
-          <h3 class="text-base font-bold text-slate-200">샘플 역산 프롬프트 창이 비어 있습니다</h3>
+          <h3 class="text-base font-bold text-slate-200">Reverse Prompting 창이 비어 있습니다</h3>
           <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
             왼쪽에 <strong>샘플 이미지</strong>를 업로드하거나 장면 설명을 적은 뒤<br/>
-            <span class="text-amber-400 font-semibold">[✨ 이미지 샘플 → 3단계 프롬프트 작성]</span>을 누르시면,<br/>
+            <span class="text-amber-400 font-semibold">[✨ Reverse Prompting 실행]</span>을 누르시면,<br/>
             동일한 분위기와 구도를 재현하는 Step 1·2·3 프롬프트가 생성됩니다.
           </p>
         </div>
@@ -304,7 +304,7 @@
         <div id="sampleResultWrapper" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
             <div>
-              <span class="text-xs font-bold uppercase tracking-wider text-amber-400">이미지 샘플 역산 결과 · Flow 3단계</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Reverse Prompting 결과 · Flow 3단계</span>
               <h3 class="text-sm font-semibold text-white mt-0.5">Nano Banana 2.1/Pro 최적화 · 직접 수정 가능</h3>
             </div>
             <div class="flex flex-wrap items-center gap-1.5">
@@ -344,7 +344,7 @@
     </div>
   </main>
 
-  <!-- TAB 3: ADOBE STOCK 95% AUDITOR -->
+  <!-- TAB 3: APPROVAL AUDIT -->
   <main id="tab3" class="hidden max-w-7xl mx-auto px-4 py-6 space-y-6">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
@@ -386,7 +386,7 @@
       <section class="lg:col-span-6 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-5">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
-            <h2 class="text-base font-bold text-white">어도비 스톡 승인 적합성 진단 리포트</h2>
+            <h2 class="text-base font-bold text-white">승인 검수 진단 리포트</h2>
             <p class="text-xs text-slate-400">기술적 수치 자동 분석 + 육안 체크리스트 합산</p>
           </div>
           <div class="text-right">
@@ -862,7 +862,7 @@
 
       const engRef = parseEnglishBibleRef(ref);
       const prompt = `You are a top visual storytelling artist and Adobe Stock prompt engineer.
-Analyze this EXACT Bible passage (${ref || 'Bible Passage'}: "${verse}") and create ONE direct, literal narrative concept ("본문 충실 서사 직관형") staying 100% FAITHFUL to the literal objects, actions, and emotions in the text (DO NOT pre-sanitize).
+Analyze this EXACT Bible passage (${ref || 'Bible Passage'}: "${verse}") and create ONE direct, literal narrative concept ("본문 충실 프롬프트") staying 100% FAITHFUL to the literal objects, actions, and emotions in the text (DO NOT pre-sanitize).
 CRITICAL COMPOSITION RULE:
 - NO copy space. Place the character and key subjects at the **Golden Ratio (1:1.618 focal intersection)** in a balanced 16:9 composition.
 Produce:
@@ -897,13 +897,13 @@ Return STRICT JSON ONLY:
       } catch (e) {
         const errBanner = document.getElementById('apiErrorBanner');
         errBanner.classList.remove('hidden');
-        errBanner.innerHTML = `<strong>⚠️ Gemini API 안내:</strong> ${e.message}<br/><span class="text-slate-300">→ 내장된 로컬 서사 직관형 엔진으로 본문 그대로 작성했습니다.</span>`;
+        errBanner.innerHTML = `<strong>⚠️ Gemini API 안내:</strong> ${e.message}<br/><span class="text-slate-300">→ 내장된 로컬 엔진으로 본문 그대로 작성했습니다.</span>`;
         const data = buildLiteralNarrativeLocally(ref, verse, extracted);
         renderImageGuideBox(data.chips, data.guideText);
         applyGeneratedOutput(data.cut1, data.cut2, data.title1, data.title2, data.topicArr);
       } finally {
         btn.disabled = false;
-        btn.textContent = "✨ 본문 충실 서사 직관형 프롬프트 생성";
+        btn.textContent = "✨ 본문 충실 프롬프트 생성";
       }
     }
 
@@ -1005,442 +1005,4 @@ Return STRICT JSON ONLY:
       showToast("Flow 에러 대응 순화 수정이 적용되었습니다!");
     }
 
-    function restoreOriginal(cutKey) {
-      const prefix = cutKey === 'cut1' ? 'c1' : (cutKey === 'cut2' ? 'c2' : 'sp');
-      const backup = originalPromptsBackup[cutKey];
-      if (!backup || backup.length === 0) return;
-      for (let i = 0; i < 3; i++) {
-        const ta = document.getElementById(`${prefix}_step_${i}`);
-        if (ta) ta.value = backup[i];
-      }
-      document.getElementById(`${cutKey}FixNotice`).classList.add('hidden');
-      showToast("원래 프롬프트로 복구되었습니다.");
-    }
-
-    function resetAll() {
-      document.getElementById('verseRef').value = "";
-      document.getElementById('verseText').value = "";
-      updateDetectedRef();
-      document.getElementById('imageGuideBox').classList.add('hidden');
-      document.getElementById('apiErrorBanner').classList.add('hidden');
-      document.getElementById('resultsWrapper').classList.add('hidden');
-      document.getElementById('emptyResultState').classList.remove('hidden');
-      showToast("모든 입력과 결과가 초기화되었습니다.");
-    }
-
-    function copyMasterMetaPrompt() {
-      const ref = document.getElementById('verseRef').value;
-      const engRef = parseEnglishBibleRef(ref);
-      const verse = document.getElementById('verseText').value;
-      if (!verse && !ref) {
-        showToast("성경 출처 또는 본문을 먼저 입력하세요!");
-        return;
-      }
-      const master = `Act as a top image artist and Adobe Stock prompt engineer. Based strictly on this Bible passage (${ref}${engRef ? ` / ${engRef}` : ''}):
-"${verse}"
-
-Create ONE literal, faithful biblical narrative concept ("본문 충실 서사 직관형") — DO NOT pre-sanitize objects or actions mentioned in the text.
-NO copy space. Place the character and key subjects at the Golden Ratio (1:1.618) focal intersection within a balanced 16:9 frame.
-First, briefly explain with 5 Korean keywords what image will be generated.
-Then output Flow 3-step prompts (Step 1 Space & background, Step 2 Keep exact background... Place literal materials/event at Golden Ratio focal point, Step 3 Preserve exact composition... 8k details) for:
-- Cut 1 (person emotion + literal passage event)
-- Cut 2 (weathered human hands + literal objects/action)
-Specs: 16:9, Golden Ratio composition, Ancient Middle Eastern realistic setting, 35mm lens, pin-sharp focus, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, natural 5 fingers, 8k commercial stock photo.
-Also provide Adobe Stock English Title (under 200 chars, NO "copy space", include "${engRef || 'Exodus 4'}") and 25 English Keywords for each cut.`;
-      navigator.clipboard.writeText(master);
-      showToast("Gemini/ChatGPT 웹 복사용 마스터 요청문이 복사되었습니다!");
-    }
-
-    /* TAB 2: SAMPLE IMAGE TO 3-STEP PROMPT */
-    function handleSampleUpload(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        sampleImageBase64 = evt.target.result;
-        const img = new Image();
-        img.onload = function() {
-          document.getElementById('samplePreviewBox').classList.remove('hidden');
-          document.getElementById('samplePreviewImg').src = evt.target.result;
-          analyzeSampleColorAndRatio(img);
-        };
-        img.src = evt.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function analyzeSampleColorAndRatio(img) {
-      const c = document.createElement('canvas');
-      c.width = 100;
-      c.height = 100;
-      const ctx = c.getContext('2d');
-      ctx.drawImage(img, 0, 0, 100, 100);
-      const data = ctx.getImageData(0, 0, 100, 100).data;
-
-      let rSum = 0, gSum = 0, bSum = 0, lumSum = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        rSum += data[i]; gSum += data[i + 1]; bSum += data[i + 2];
-        lumSum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      }
-      const n = data.length / 4;
-      const rAvg = rSum / n, bAvg = bSum / n, lumAvg = lumSum / n;
-      const isWarm = rAvg - bAvg > 18;
-      const isBright = lumAvg > 135;
-
-      sampleVisualTone = isWarm
-        ? (isBright ? "warm golden-hour natural sunlight and sunlit ochre tones" : "warm amber dramatic side lighting and deep earth shadows")
-        : (isBright ? "crisp natural daylight and neutral stone tones" : "soft moody low-key directional natural light");
-
-      const ratio = (img.naturalWidth / img.naturalHeight).toFixed(2);
-      document.getElementById('sampleAutoVisualInfo').innerHTML = `
-        <div><strong>해상도:</strong> ${img.naturalWidth} × ${img.naturalHeight} (비율 ${ratio})</div>
-        <div><strong>감지된 조명·색감:</strong> ${isWarm ? '따뜻한 황금/사막 톤' : '차분한 중립/자연 톤'} · ${isBright ? '밝고 선명한 노출' : '깊이감 있는 명암'}</div>
-      `;
-    }
-
-    async function generatePromptFromSample() {
-      const apiKey = localStorage.getItem('gemini_api_key');
-      const bgInput = document.getElementById('sampleBgDesc').value.trim();
-      const subjInput = document.getElementById('sampleSubjectDesc').value.trim();
-
-      if (!sampleImageBase64 && !bgInput && !subjInput) {
-        showToast("먼저 샘플 이미지를 올리거나 장면 요소를 입력해 주세요!");
-        return;
-      }
-
-      document.getElementById('sampleApiBanner').classList.add('hidden');
-
-      if (apiKey && sampleImageBase64) {
-        await generateSampleWithGeminiVision(apiKey);
-      } else {
-        buildSamplePromptLocally(bgInput, subjInput);
-      }
-    }
-
-    function buildSamplePromptLocally(bgInput, subjInput) {
-      const refVal = document.getElementById('sampleBibleRef').value.trim();
-      const engRef = parseEnglishBibleRef(refVal);
-
-      const bgDesc = bgInput || "the exact authentic environmental setting and spatial atmosphere of the reference sample";
-      const subjDesc = subjInput || "the exact human character, hand posture, clothing texture, and key objects seen in the reference sample";
-
-      const steps = [
-        `Create a 16:9 photorealistic background scene replicating ${bgDesc}, bathed in ${sampleVisualTone}, arranged with balanced Golden Ratio spatial depth. Shot on a 35mm lens, commercial stock photography aesthetic, no people, no text, no watermarks.`,
-        `Keep the exact background, lighting direction, and 16:9 Golden Ratio framing from the previous image. Place key materials at the Golden Ratio focal intersection: ${subjDesc}. Ensure human face and hands are anatomically clear with natural five fingers and undistorted posture.`,
-        `Preserve the exact composition, Golden Ratio subject placement, and anatomy from the previous step. Refine to ultra-detailed 8k resolution photorealistic commercial stock photo shot on a 35mm lens, pin-sharp focus from foreground to background, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, natural lighting highlights, no artifacts.`
-      ];
-
-      renderSampleOutput(steps, `Photorealistic scene recreating ${subjDesc.slice(0, 60)} in 16:9 Golden Ratio composition`, ["photorealistic", "35mm", "golden ratio", "commercial stock", "8k", "ancient", "natural light", "raw stone texture", "coarse fabric", "close up", "biblical", "authentic", "skin pores", "historical", "storytelling"], engRef);
-      showToast("샘플 기반 3단계 프롬프트가 작성되었습니다!");
-    }
-
-    async function generateSampleWithGeminiVision(apiKey) {
-      const btn = document.getElementById('sampleGenerateBtn');
-      btn.disabled = true;
-      btn.textContent = "⏳ Gemini Vision이 샘플 이미지를 3단계로 역산 중...";
-
-      const refVal = document.getElementById('sampleBibleRef').value.trim();
-      const engRef = parseEnglishBibleRef(refVal);
-      const base64Data = sampleImageBase64.split(',')[1];
-      const mimeType = sampleImageBase64.split(';')[0].split(':')[1];
-
-      const prompt = `Please write the prompt to create the attached image as is, strictly following this 3-step structure optimized for Google Flow (Nano Banana 2.1 and Pro):
-- Step 1: Create the space and background (16:9, exact lighting, atmosphere, Golden Ratio depth, no people, no text).
-- Step 2: Place key materials (MUST start with "Keep the exact..." and place the exact person/hands/clothing/objects from the attached image at the Golden Ratio focal point, perfect human hand, natural 5 fingers, anatomically clear face and hands).
-- Step 3: Expressing details and adding special effects (MUST start with "Preserve the exact...", pin-sharp focus from foreground to background, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, 8k resolution, shot on 35mm lens, commercial stock photo, no artifact, 95% Adobe Stock approval quality).
-Also output an Adobe Stock English Title (under 200 chars${engRef ? `, MUST include "${engRef}"` : ''}) and 25 relevant English Keywords.
-Return STRICT JSON ONLY:
-{
-  "step1": "...",
-  "step2": "...",
-  "step3": "...",
-  "title": "...",
-  "keywords": ["kw1", "kw2"]
-}`;
-
-      try {
-        const rawText = await callGeminiWithFallback(apiKey, {
-          contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType, data: base64Data } }] }],
-          generationConfig: { responseMimeType: "application/json" }
-        });
-        const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleaned);
-        renderSampleOutput([parsed.step1, parsed.step2, parsed.step3], parsed.title, parsed.keywords || [], engRef);
-        showToast("Gemini Vision 샘플 이미지 역산 완료!");
-      } catch (e) {
-        const banner = document.getElementById('sampleApiBanner');
-        banner.classList.remove('hidden');
-        banner.innerHTML = `<strong>⚠️ Gemini API 안내:</strong> ${e.message}<br/><span class="text-slate-300">→ API 없이 완벽히 역산하시려면 아래 <strong>[📋 샘플 이미지와 함께 웹에 붙일 요청문 복사]</strong> 버튼을 눌러 Gemini/ChatGPT 웹에 사진과 함께 붙여넣으세요!</span>`;
-        buildSamplePromptLocally(document.getElementById('sampleBgDesc').value.trim(), document.getElementById('sampleSubjectDesc').value.trim());
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "✨ 이미지 샘플 → 3단계 프롬프트 작성";
-      }
-    }
-
-    function renderSampleOutput(steps, rawTitle, kwArr, engRef) {
-      originalPromptsBackup.sample = [...steps];
-      document.getElementById('sampleFixNotice').classList.add('hidden');
-      renderEditableSteps('sampleSteps', steps, 'sp');
-      document.getElementById('sampleTitle').value = formatAdobeTitle(rawTitle, engRef);
-      const refBookKw = engRef ? engRef.split(' ')[0] : null;
-      const mergedKw = [...(refBookKw ? [engRef, refBookKw] : []), ...kwArr, "photorealistic", "35mm", "commercial stock", "golden ratio"];
-      document.getElementById('sampleKeywords').value = [...new Set(mergedKw)].slice(0, 25).join(', ');
-      document.getElementById('sampleEmptyState').classList.add('hidden');
-      document.getElementById('sampleResultWrapper').classList.remove('hidden');
-    }
-
-    function copySampleWebPrompt() {
-      const refVal = document.getElementById('sampleBibleRef').value.trim();
-      const engRef = parseEnglishBibleRef(refVal);
-      const promptText = `Please write the prompt to create the attached image as is.
-Step 1 - Create the space and background (16:9 ratio, Golden Ratio spatial depth, lighting, environment, no people)
-Step 2 - Place key materials (Keep the exact background from Step 1. Position the character/hands/objects using Golden Ratio in 16:9, perfect human hand, natural five fingers, anatomically clear face and hands)
-Step 3 - Expressing details and adding special effects (Preserve the exact composition from Step 2. Pin-sharp focus from foreground to background, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, no artifact, 8k resolution, shot on 35mm lens, commercial stock photo)
-Please fill out the prompts according to the Nano Banana 2.1 and Pro optimization principles. Prohibition on making images. It is important to have 95% Adobe Stock approval.
-Also provide an Adobe Stock English Title (under 200 chars${engRef ? `, include "${engRef}"` : ''}) and 25 English Keywords.`;
-      navigator.clipboard.writeText(promptText);
-      showToast("샘플 이미지 역산용 마스터 프롬프트가 복사되었습니다!");
-    }
-
-    function resetSampleTab() {
-      sampleImageBase64 = null;
-      document.getElementById('sampleInput').value = "";
-      document.getElementById('sampleBibleRef').value = "";
-      document.getElementById('sampleBgDesc').value = "";
-      document.getElementById('sampleSubjectDesc').value = "";
-      document.getElementById('samplePreviewBox').classList.add('hidden');
-      document.getElementById('sampleApiBanner').classList.add('hidden');
-      document.getElementById('sampleResultWrapper').classList.add('hidden');
-      document.getElementById('sampleEmptyState').classList.remove('hidden');
-      showToast("샘플 역산 탭이 초기화되었습니다.");
-    }
-
-    function downloadCSV(source) {
-      let rows;
-      if (source === 'tab2') {
-        rows = [
-          ["Filename", "Title", "Keywords", "Category"],
-          ["sample_recreated.jpg", document.getElementById('sampleTitle').value, document.getElementById('sampleKeywords').value, "Religion"]
-        ];
-      } else {
-        rows = [
-          ["Filename", "Title", "Keywords", "Category"],
-          ["cut1_image.jpg", document.getElementById('cut1Title').value, document.getElementById('cut1Keywords').value, "Religion"],
-          ["cut2_image.jpg", document.getElementById('cut2Title').value, document.getElementById('cut2Keywords').value, "Religion"]
-        ];
-      }
-      const csvContent = rows.map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")).join("\n");
-      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = source === 'tab2' ? "adobe_stock_sample_metadata.csv" : "adobe_stock_metadata.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    /* TAB 3: IMAGE AUDITOR */
-    function handleImageUpload(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        currentImageBase64 = evt.target.result;
-        const img = new Image();
-        img.onload = function() {
-          hasUploadedImage = true;
-          document.getElementById('previewContainer').classList.remove('hidden');
-          document.getElementById('previewImg').src = evt.target.result;
-          runLocalTechnicalAudit(img);
-        };
-        img.src = evt.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function runLocalTechnicalAudit(img) {
-      const w = img.naturalWidth;
-      const h = img.naturalHeight;
-      const mp = (w * h) / 1000000;
-      const ratio = w / h;
-      const is169 = Math.abs(ratio - (16 / 9)) < 0.05;
-      const is4MP = mp >= 4.0;
-
-      document.getElementById('imgDimBadge').textContent = `${w} × ${h} (${mp.toFixed(2)} MP)`;
-
-      const cCanvas = document.getElementById('cornerCanvas');
-      const cCtx = cCanvas.getContext('2d');
-      cCtx.clearRect(0, 0, 140, 140);
-      const cropSize = Math.min(120, Math.floor(Math.min(w, h) * 0.14));
-      cCtx.drawImage(img, w - cropSize, h - cropSize, cropSize, cropSize, 0, 0, 140, 140);
-
-      const aCanvas = document.createElement('canvas');
-      const sw = 320;
-      const sh = Math.round(320 * (h / w));
-      aCanvas.width = sw;
-      aCanvas.height = sh;
-      const aCtx = aCanvas.getContext('2d');
-      aCtx.drawImage(img, 0, 0, sw, sh);
-      const pixels = aCtx.getImageData(0, 0, sw, sh).data;
-
-      let sumLum = 0;
-      let edgeSum = 0;
-      const lumArr = new Float32Array(sw * sh);
-
-      for (let i = 0; i < pixels.length; i += 4) {
-        const lum = 0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2];
-        lumArr[i / 4] = lum;
-        sumLum += lum;
-      }
-      const avgLum = sumLum / (sw * sh);
-
-      for (let y = 1; y < sh - 1; y++) {
-        for (let x = 1; x < sw - 1; x++) {
-          const idx = y * sw + x;
-          const lap = Math.abs(4 * lumArr[idx] - lumArr[idx - 1] - lumArr[idx + 1] - lumArr[idx - sw] - lumArr[idx + sw]);
-          edgeSum += lap;
-        }
-      }
-      const avgEdge = edgeSum / (sw * sh);
-      const goodExposure = avgLum >= 45 && avgLum <= 215;
-      const goodSharpness = avgEdge >= 10;
-
-      currentTechScore = (is4MP ? 15 : 4) + (is169 ? 5 : 0) + (goodExposure ? 8 : 3) + (goodSharpness ? 7 : 2);
-
-      const checksHtml = [
-        renderCheckRow("해상도 (최소 4MP 이상)", is4MP, `${mp.toFixed(2)} MP (${w}×${h})`, is4MP ? "어도비 스톡 최소 해상도 기준 통과" : "4MP 미만! 업로드 전 2배 이상 업스케일(4K) 필수"),
-        renderCheckRow("16:9 와이드 비율", is169, `비율 ${ratio.toFixed(2)}`, is169 ? "16:9 설교 스크린 규격 일치" : "16:9 비율과 다릅니다"),
-        renderCheckRow("노출(밝기) 밸런스", goodExposure, `평균 휘도 ${Math.round(avgLum)}/255`, goodExposure ? "과다/과소 노출 없이 적정함" : "너무 어둡거나 밝아 보정 권장"),
-        renderCheckRow("전반적 엣지 선명도", goodSharpness, `선명도 지수 ${avgEdge.toFixed(1)}`, goodSharpness ? "디테일과 윤곽이 또렷함" : "흐릿함(Out of focus) 주의")
-      ].join('');
-
-      document.getElementById('techChecks').innerHTML = checksHtml;
-      recalculateScore();
-    }
-
-    function renderCheckRow(title, pass, metric, desc) {
-      return `
-        <div class="p-3 rounded-xl bg-slate-950 border ${pass ? 'border-emerald-500/30' : 'border-rose-500/40'} flex items-center justify-between gap-3">
-          <div>
-            <div class="font-bold ${pass ? 'text-emerald-300' : 'text-rose-400'}">${pass ? '✅' : '⚠️'} ${title}</div>
-            <div class="text-[11px] text-slate-400 mt-0.5">${desc}</div>
-          </div>
-          <span class="text-xs font-mono px-2 py-1 rounded bg-slate-900 text-slate-200 shrink-0">${metric}</span>
-        </div>
-      `;
-    }
-
-    function recalculateScore() {
-      if (!hasUploadedImage) return;
-      let manualScore = 0;
-      document.querySelectorAll('.audit-chk').forEach(chk => {
-        if (chk.checked) manualScore += Number(chk.dataset.weight);
-      });
-      const total = Math.min(99, currentTechScore + manualScore);
-      const scoreEl = document.getElementById('finalScore');
-      scoreEl.textContent = `${total}%`;
-
-      if (total >= 90) {
-        scoreEl.className = "text-2xl font-extrabold text-emerald-400";
-        document.getElementById('verdictBox').innerHTML = `<span class="text-emerald-300 font-bold">승인 준비 완료 (${total}%):</span> 기술적 기준과 스톡 정책 검수를 모두 통과했습니다. CSV 메타데이터와 함께 업로드하세요.`;
-      } else if (total >= 70) {
-        scoreEl.className = "text-2xl font-extrabold text-amber-400";
-        document.getElementById('verdictBox').innerHTML = `<span class="text-amber-300 font-bold">보완 후 업로드 권장 (${total}%):</span> 4MP 업스케일링 여부나 우측 하단 워터마크·체크리스트 미확인 항목을 점검해 주세요.`;
-      } else {
-        scoreEl.className = "text-2xl font-extrabold text-rose-400";
-        document.getElementById('verdictBox').innerHTML = `<span class="text-rose-400 font-bold">반려 위험 높음 (${total}%):</span> 해상도(4MP) 부족 또는 워터마크/체크리스트 미통과 상태입니다.`;
-      }
-    }
-
-    async function runGeminiVisionAudit() {
-      const apiKey = localStorage.getItem('gemini_api_key');
-      if (!apiKey || !currentImageBase64) return;
-      const outBox = document.getElementById('aiAuditResult');
-      outBox.classList.remove('hidden');
-      outBox.textContent = "🤖 Gemini Vision이 정밀 스캔 중입니다...";
-
-      const base64Data = currentImageBase64.split(',')[1];
-      const mimeType = currentImageBase64.split(';')[0].split(':')[1];
-
-      try {
-        const text = await callGeminiWithFallback(apiKey, {
-          contents: [{
-            parts: [
-              { text: "You are a strict Adobe Stock moderator. Inspect this image for: 1) AI watermark (especially bottom-right star mark), 2) Hand/finger/eye anatomy errors, 3) Artifacts/blur, 4) Violence/IP issues, 5) Golden Ratio framing quality. Give a concise Korean report with Pass/Reject risk and exact fix needed." },
-              { inlineData: { mimeType, data: base64Data } }
-            ]
-          }]
-        });
-        outBox.textContent = text;
-      } catch (e) {
-        outBox.textContent = "오류 발생: " + e.message;
-      }
-    }
-
-    function toggleApiModal() {
-      const m = document.getElementById('apiModal');
-      m.classList.toggle('hidden');
-      document.getElementById('geminiApiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
-      const savedModel = localStorage.getItem('gemini_model') || 'auto';
-      const sel = document.getElementById('geminiModelSelect');
-      if ([...sel.options].some(o => o.value === savedModel)) sel.value = savedModel;
-      document.getElementById('geminiModelCustom').value = savedModel === 'auto' ? '' : savedModel;
-      document.getElementById('modelFetchStatus').textContent = '';
-    }
-
-    function saveApiKey() {
-      const val = document.getElementById('geminiApiKeyInput').value.trim();
-      const customModel = document.getElementById('geminiModelCustom').value.trim();
-      const selModel = document.getElementById('geminiModelSelect').value;
-      localStorage.setItem('gemini_model', customModel || selModel || 'auto');
-      if (val) {
-        localStorage.setItem('gemini_api_key', val);
-        showToast("API 키와 모델 설정이 저장되었습니다.");
-      }
-      document.getElementById('apiErrorBanner').classList.add('hidden');
-      updateApiBadge();
-      toggleApiModal();
-    }
-
-    function clearApiKey() {
-      localStorage.removeItem('gemini_api_key');
-      document.getElementById('geminiApiKeyInput').value = '';
-      document.getElementById('apiErrorBanner').classList.add('hidden');
-      updateApiBadge();
-      toggleApiModal();
-      showToast("API 키가 삭제되어 무료 로컬 분석 모드로 전환되었습니다.");
-    }
-
-    function updateApiBadge() {
-      const hasKey = Boolean(localStorage.getItem('gemini_api_key'));
-      const badge = document.getElementById('apiStatusBadge');
-      const aiBtn = document.getElementById('aiAuditBtn');
-      if (hasKey) {
-        badge.textContent = "Gemini AI 연동 활성";
-        badge.className = "text-xs px-2.5 py-1 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30";
-        aiBtn.classList.remove('hidden');
-      } else {
-        badge.textContent = "무료 로컬 분석 엔진";
-        badge.className = "text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30";
-        aiBtn.classList.add('hidden');
-      }
-    }
-
-    function copyValById(id) {
-      const el = document.getElementById(id);
-      navigator.clipboard.writeText(el.value);
-      showToast("클립보드에 복사되었습니다!");
-    }
-
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.remove('hidden');
-      setTimeout(() => t.classList.add('hidden'), 2400);
-    }
-
-    init();
-  </script>
-</body>
-</html>
+    function rest
