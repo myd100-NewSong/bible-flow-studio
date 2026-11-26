@@ -342,21 +342,30 @@
         <button onclick="toggleApiModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">
-        API 키가 없어도 내장된 본문 분석 엔진이 판매 베스트 콘셉트 3안을 추천하고 프롬프트를 생성합니다.
-        추후 AI 정밀 문맥 추천 및 비전 검수를 원하실 때만 Google AI Studio 무료 API 키를 입력하세요.
+        API 키 입력 후 <strong>[내 키 가용 모델 조회]</strong>를 누르면 Google 서버에서 현재 사용 가능한 최신 모델을 자동으로 불러옵니다.
       </p>
       <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1">Gemini API Key</label>
         <input id="geminiApiKeyInput" type="password" placeholder="AIzaSy..."
           class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500" />
       </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-300 mb-1">사용할 Gemini 모델</label>
-        <select id="geminiModelSelect" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
-          <option value="gemini-2.5-flash">gemini-2.5-flash (권장 · 최신 무료 티어)</option>
-          <option value="gemini-2.0-flash">gemini-2.0-flash (안정형)</option>
-          <option value="gemini-2.5-pro">gemini-2.5-pro (고성능)</option>
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-semibold text-slate-300">사용할 Gemini 모델 (자동 추천/직접 수정 가능)</label>
+          <button type="button" onclick="refreshAvailableModels()" class="text-[11px] px-2 py-0.5 rounded bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30">
+            🔄 내 키 가용 모델 조회
+          </button>
+        </div>
+        <select id="geminiModelSelect" onchange="document.getElementById('geminiModelCustom').value = this.value"
+          class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+          <option value="auto">자동 선택 (Google 서버에서 최신 가용 모델 자동 탐색)</option>
+          <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+          <option value="gemini-3.0-flash">gemini-3.0-flash</option>
+          <option value="gemini-2.5-pro">gemini-2.5-pro</option>
         </select>
+        <input id="geminiModelCustom" type="text" placeholder="또는 모델 ID 직접 입력 (예: gemini-2.5-flash)"
+          class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-1.5 text-xs text-slate-300 mono focus:outline-none focus:border-amber-500" />
+        <p id="modelFetchStatus" class="text-[11px] text-slate-400"></p>
       </div>
       <div class="flex justify-end gap-2">
         <button onclick="clearApiKey()" class="px-3 py-2 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300">키 삭제 (로컬 모드)</button>
@@ -402,7 +411,6 @@
       ["몬", "Philemon"], ["히", "Hebrews"], ["약", "James"], ["유", "Jude"], ["계", "Revelation"]
     ];
 
-    // 확장된 성경 본문 테마 데이터베이스 (본문 1개 매칭 시에도 관련성 100% 3가지 변주 생성!)
     const BIBLICAL_THEMES = [
       {
         id: "staff_miracle",
@@ -639,7 +647,6 @@
       return cleanBase.slice(0, 200);
     }
 
-    // 1단계: 본문 분석 → 가장 잘 팔리는 3안 추천
     async function recommendConcepts() {
       const ref = document.getElementById('verseRef').value.trim();
       const verse = document.getElementById('verseText').value.trim();
@@ -666,7 +673,6 @@
       }
     }
 
-    // 로컬 엔진: 본문 핵심 키워드에 100% 밀착된 3가지 변주 생성 (엉뚱한 카드 방지)
     function buildLocalTop3Concepts(ref, verse) {
       const combined = `${ref} ${verse}`.toLowerCase();
       let bestTheme = null;
@@ -695,7 +701,6 @@
         return bestTheme.variants.map((v, idx) => ({ ...v, badgeColor: colors[idx] }));
       }
 
-      // 기본 매칭이 없을 때 범용 본문 맞춤형 3안 (기도/묵상/여정)
       return [
         {
           badge: "추천 1 · 최고 판매 보편 감성형",
@@ -736,12 +741,81 @@
       ];
     }
 
-    async function callGeminiWithFallback(apiKey, payload) {
-      const selectedModel = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
-      const modelsToTry = [...new Set([selectedModel, 'gemini-2.5-flash', 'gemini-2.0-flash'])];
-      let lastError = "알 수 없는 오류";
+    // Google 서버에서 현재 키로 실제 사용 가능한 최신 텍스트/비전 모델 목록 조회
+    async function fetchAvailableModels(apiKey) {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error?.message || `모델 목록 조회 실패 (HTTP ${res.status})`);
+      }
+      const list = (data.models || [])
+        .filter(m =>
+          Array.isArray(m.supportedGenerationMethods) &&
+          m.supportedGenerationMethods.includes("generateContent") &&
+          m.name.includes("gemini") &&
+          !/embedding|imagen|veo|tts|audio|robotics|computer-use|deep-research/i.test(m.name)
+        )
+        .map(m => m.name.replace(/^models\//, ""));
 
-      for (const model of modelsToTry) {
+      // flash 우선 + 최신 버전 순 정렬
+      list.sort((a, b) => {
+        const aFlash = a.includes("flash") ? 1 : 0;
+        const bFlash = b.includes("flash") ? 1 : 0;
+        if (aFlash !== bFlash) return bFlash - aFlash;
+        return b.localeCompare(a, undefined, { numeric: true });
+      });
+      return list;
+    }
+
+    async function refreshAvailableModels() {
+      const keyInput = document.getElementById('geminiApiKeyInput').value.trim() || localStorage.getItem('gemini_api_key');
+      const statusEl = document.getElementById('modelFetchStatus');
+      if (!keyInput) {
+        statusEl.textContent = "⚠️ 먼저 위에 Gemini API Key를 입력해 주세요.";
+        statusEl.className = "text-[11px] text-rose-400";
+        return;
+      }
+      statusEl.textContent = "⏳ Google 서버에서 사용 가능한 모델 목록을 불러오는 중...";
+      statusEl.className = "text-[11px] text-sky-300";
+
+      try {
+        const models = await fetchAvailableModels(keyInput);
+        if (models.length === 0) {
+          throw new Error("사용 가능한 generateContent 모델을 찾지 못했습니다.");
+        }
+        const select = document.getElementById('geminiModelSelect');
+        select.innerHTML = `<option value="auto">자동 선택 (${models[0]} 우선 사용)</option>` +
+          models.map(m => `<option value="${m}">${m}</option>`).join('');
+        select.value = models[0];
+        document.getElementById('geminiModelCustom').value = models[0];
+        statusEl.textContent = `✅ ${models.length}개 가용 모델 확인됨! 추천 모델: ${models[0]}`;
+        statusEl.className = "text-[11px] text-emerald-400";
+      } catch (e) {
+        statusEl.textContent = "❌ 조회 실패: " + e.message;
+        statusEl.className = "text-[11px] text-rose-400";
+      }
+    }
+
+    async function callGeminiWithFallback(apiKey, payload) {
+      const savedModel = localStorage.getItem('gemini_model') || 'auto';
+      let candidates = [];
+
+      if (savedModel && savedModel !== 'auto') {
+        candidates.push(savedModel);
+      }
+
+      // Google 서버에서 실시간 가용 모델 자동 조회하여 후보에 추가
+      try {
+        const liveModels = await fetchAvailableModels(apiKey);
+        candidates.push(...liveModels);
+      } catch (_) {
+        candidates.push('gemini-2.5-flash', 'gemini-3.0-flash', 'gemini-2.5-pro');
+      }
+
+      const uniqueModels = [...new Set(candidates)].slice(0, 5);
+      let firstError = "";
+
+      for (const model of uniqueModels) {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -750,20 +824,22 @@
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok || data.error) {
-          lastError = data.error?.message || `HTTP ${res.status} 오류 (${model})`;
-          // API 키 자체가 잘못된 경우 재시도 무의미 -> 즉시 중단
-          if (res.status === 400 && lastError.toLowerCase().includes('api key')) {
-            throw new Error(lastError);
+          const msg = data.error?.message || `HTTP ${res.status}`;
+          if (!firstError) firstError = `[${model}] ${msg}`;
+          if (res.status === 400 && msg.toLowerCase().includes('api key')) {
+            throw new Error(msg);
           }
           continue;
         }
 
-        const candidate = data.candidates?.[0];
-        const text = candidate?.content?.parts?.[0]?.text;
-        if (text) return text;
-        lastError = `응답 텍스트가 비어 있음 (사유: ${candidate?.finishReason || 'UNKNOWN'})`;
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          // 성공한 모델을 기억
+          localStorage.setItem('gemini_last_working_model', model);
+          return text;
+        }
       }
-      throw new Error(lastError);
+      throw new Error(firstError || "가용한 Gemini 모델을 찾지 못했습니다.");
     }
 
     async function recommendConceptsWithGemini(apiKey, ref, verse) {
@@ -814,11 +890,12 @@ Return STRICT JSON ONLY (an array of 3 objects, no markdown):
           badgeColor: colors[idx] || colors[0]
         }));
         renderConceptCards();
-        showToast("Gemini AI 본문 분석 완료! 1가지를 선택하세요.");
+        const usedModel = localStorage.getItem('gemini_last_working_model') || 'Gemini';
+        showToast(`${usedModel} 분석 완료! 1가지를 선택하세요.`);
       } catch (e) {
         const errBanner = document.getElementById('apiErrorBanner');
         errBanner.classList.remove('hidden');
-        errBanner.innerHTML = `<strong>⚠️ Gemini API 안내:</strong> ${e.message}<br/><span class="text-slate-300">→ 우선 내장된 로컬 분석 엔진으로 본문에 맞는 콘셉트를 추천했습니다. API 키를 사용하지 않으려면 우측 상단 [⚙️ API 설정] → [키 삭제]를 누르세요.</span>`;
+        errBanner.innerHTML = `<strong>⚠️ Gemini API 안내:</strong> ${e.message}<br/><span class="text-slate-300">→ 우선 내장된 로컬 분석 엔진으로 본문에 맞는 콘셉트를 추천했습니다.</span>`;
 
         recommendedConcepts = buildLocalTop3Concepts(ref, verse);
         renderConceptCards();
@@ -1182,13 +1259,22 @@ Rules for final generation:
       const m = document.getElementById('apiModal');
       m.classList.toggle('hidden');
       document.getElementById('geminiApiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
-      document.getElementById('geminiModelSelect').value = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
+      const savedModel = localStorage.getItem('gemini_model') || 'auto';
+      const sel = document.getElementById('geminiModelSelect');
+      if ([...sel.options].some(o => o.value === savedModel)) {
+        sel.value = savedModel;
+      }
+      document.getElementById('geminiModelCustom').value = savedModel === 'auto' ? '' : savedModel;
+      document.getElementById('modelFetchStatus').textContent = '';
     }
 
     function saveApiKey() {
       const val = document.getElementById('geminiApiKeyInput').value.trim();
-      const model = document.getElementById('geminiModelSelect').value;
-      localStorage.setItem('gemini_model', model);
+      const customModel = document.getElementById('geminiModelCustom').value.trim();
+      const selModel = document.getElementById('geminiModelSelect').value;
+      const finalModel = customModel || selModel || 'auto';
+
+      localStorage.setItem('gemini_model', finalModel);
       if (val) {
         localStorage.setItem('gemini_api_key', val);
         showToast("Gemini API 키와 모델 설정이 저장되었습니다.");
@@ -1200,6 +1286,7 @@ Rules for final generation:
 
     function clearApiKey() {
       localStorage.removeItem('gemini_api_key');
+      localStorage.removeItem('gemini_last_working_model');
       document.getElementById('geminiApiKeyInput').value = '';
       document.getElementById('apiErrorBanner').classList.add('hidden');
       updateApiBadge();
