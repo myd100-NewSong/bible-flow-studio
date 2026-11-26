@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bible Flow Studio v0.1.4 — 설교 & 어도비 스톡 3단계 프롬프트·검수기</title>
+  <title>Bible Flow Studio v0.1.5 — 본문 충실 서사 직관형 · 스톡 검수기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
@@ -24,10 +24,10 @@
           <div class="flex items-center gap-2">
             <h1 class="text-lg font-bold tracking-tight text-white">Bible Flow Studio</h1>
             <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
-              v0.1.4
+              v0.1.5
             </span>
           </div>
-          <p class="text-xs text-slate-400">텍스트 100% 충실 프롬프트 · Flow 에러 시 사후 순화 · Adobe Stock 95% 검수</p>
+          <p class="text-xs text-slate-400">본문 충실 서사 직관형 · Flow 에러 사후 순화 · Adobe Stock 95% 검수</p>
         </div>
       </div>
 
@@ -46,7 +46,7 @@
   <div class="max-w-7xl mx-auto px-4 pt-5">
     <div class="inline-flex rounded-xl bg-slate-900 p-1 border border-slate-800">
       <button id="tabBtn1" onclick="switchTab(1)" class="px-5 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-slate-950 transition">
-        1. 콘셉트 추천 &amp; Flow 3단계 프롬프트
+        1. 본문 충실 서사 직관형 프롬프트
       </button>
       <button id="tabBtn2" onclick="switchTab(2)" class="px-5 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition">
         2. 어도비 스톡 95% 승인 검수기
@@ -54,7 +54,7 @@
     </div>
   </div>
 
-  <!-- TAB 1: RECOMMEND -> SELECT -> GENERATE -->
+  <!-- TAB 1: DIRECT LITERAL NARRATIVE GENERATOR -->
   <main id="tab1" class="max-w-7xl mx-auto px-4 py-6 space-y-6">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
@@ -62,8 +62,8 @@
       <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
         <div class="flex items-start justify-between gap-2">
           <div>
-            <h2 class="text-base font-bold text-amber-400 mb-1">1단계 · 말씀 입력</h2>
-            <p class="text-xs text-slate-400">입력하신 성경 구절의 내용을 순화 없이 텍스트 그대로 충실하게 반영합니다.</p>
+            <h2 class="text-base font-bold text-amber-400 mb-1">말씀 입력 (서사 직관형)</h2>
+            <p class="text-xs text-slate-400">입력한 성경 구절의 사건·사물·감정을 순화 없이 본문 그대로 프롬프트로 작성합니다.</p>
           </div>
           <button onclick="resetAll()" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0">
             초기화
@@ -86,8 +86,8 @@
         </div>
 
         <div class="grid grid-cols-1 gap-2.5 pt-1">
-          <button id="recommendBtn" onclick="recommendConcepts()" class="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/10">
-            💡 본문 기반 판매 베스트 3안 추천받기
+          <button id="generateBtn" onclick="generateLiteralPrompts()" class="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/10">
+            ✨ 본문 충실 서사 직관형 프롬프트 생성
           </button>
           <button onclick="copyMasterMetaPrompt()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition">
             📋 무료 Gemini/ChatGPT 웹용 마스터 요청문 복사
@@ -110,41 +110,22 @@
         
         <!-- Empty State -->
         <div id="emptyResultState" class="bg-slate-900 border border-dashed border-slate-800 rounded-2xl p-14 text-center space-y-3">
-          <div class="text-4xl">💡</div>
-          <h3 class="text-base font-bold text-slate-200">추천 콘셉트와 프롬프트 창이 비어 있습니다</h3>
+          <div class="text-4xl">📖</div>
+          <h3 class="text-base font-bold text-slate-200">프롬프트 창이 비어 있습니다</h3>
           <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
             왼쪽에 <strong>성경 출처</strong>와 <strong>본문</strong>을 입력한 뒤<br/>
-            <span class="text-amber-400 font-semibold">[💡 본문 기반 판매 베스트 3안 추천받기]</span>를 누르시면,<br/>
-            텍스트 그대로의 키워드 설명과 3가지 추천안을 제안합니다.
+            <span class="text-amber-400 font-semibold">[✨ 본문 충실 서사 직관형 프롬프트 생성]</span>을 누르시면,<br/>
+            본문 내용에 정확히 일치하는 Flow 3단계 프롬프트가 즉시 작성됩니다.
           </p>
         </div>
 
-        <!-- Step 2: Concept Recommendation Cards -->
-        <div id="conceptSection" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-            <div>
-              <h2 class="text-base font-bold text-white">2단계 · 판매 베스트 콘셉트 3안 중 1가지를 선택하세요</h2>
-              <p class="text-xs text-slate-400 mt-0.5">선택하신 1가지 콘셉트로 Cut 1(인물 감정) &amp; Cut 2(손·사물) 프롬프트가 생성됩니다.</p>
-            </div>
-          </div>
-
-          <div id="conceptCardsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3.5"></div>
-
-          <div class="pt-1 flex justify-end">
-            <button id="confirmGenerateBtn" onclick="generateFromSelectedConcept()" disabled
-              class="w-full md:w-auto px-6 py-3 rounded-xl bg-slate-800 text-slate-500 font-bold text-sm transition cursor-not-allowed">
-              위 카드 중 1가지를 먼저 선택하세요
-            </button>
-          </div>
-        </div>
-
-        <!-- Step 3: Generated Prompts Wrapper -->
+        <!-- Generated Prompts Wrapper -->
         <div id="resultsWrapper" class="hidden space-y-5">
           <!-- Bar -->
           <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-4">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-sm font-bold text-white">3단계 · Flow 3단계 프롬프트</span>
-              <span id="selectedConceptBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30"></span>
+              <span class="text-sm font-bold text-white">Flow 3단계 프롬프트</span>
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">본문 충실 서사 직관형</span>
             </div>
             <button id="csvBtn" onclick="downloadCSV()" class="text-xs px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">
               ⬇ 어도비 스톡 CSV 다운로드
@@ -155,7 +136,7 @@
           <div class="bg-slate-900/90 border border-rose-500/30 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
             <div class="text-xs text-slate-300 space-y-0.5">
               <div class="font-bold text-rose-300">🚫 구글 Flow에서 "이미지를 만들 수 없습니다" 에러가 떴나요?</div>
-              <div class="text-slate-400">먼저 텍스트 그대로 생성해 보시고, Flow가 거부할 때만 우측의 <strong>[🛡️ 안전 필터 우회 수정]</strong>을 눌러 순화하세요.</div>
+              <div class="text-slate-400">먼저 본문 그대로 생성해 보시고, Flow가 거부할 때만 우측의 <strong>[🛡️ 안전 필터 우회 수정]</strong>을 눌러 순화하세요.</div>
             </div>
           </div>
 
@@ -163,8 +144,8 @@
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
               <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Cut 1 · 인물 감정 클로즈업</span>
-                <h3 class="text-sm font-semibold text-white mt-0.5">프롬프트 직접 수정 가능 · Flow 순차 입력용</h3>
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Cut 1 · 본문 인물·사건 클로즈업</span>
+                <h3 class="text-sm font-semibold text-white mt-0.5">인물의 표정과 본문 사건이 드러나는 16:9 실사 구도</h3>
               </div>
               <div class="flex flex-wrap items-center gap-1.5">
                 <button onclick="fixFlowError('cut1', 'safety')" class="text-[11px] px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-semibold transition">
@@ -206,8 +187,8 @@
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
               <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Cut 2 · 손과 행동 디테일 클로즈업</span>
-                <h3 class="text-sm font-semibold text-white mt-0.5">프롬프트 직접 수정 가능 · 고승인률 스톡 구도</h3>
+                <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Cut 2 · 손과 본문 핵심 사물 클로즈업</span>
+                <h3 class="text-sm font-semibold text-white mt-0.5">손동작과 본문 핵심 소재에 집중한 고승인률 구도</h3>
               </div>
               <div class="flex flex-wrap items-center gap-1.5">
                 <button onclick="fixFlowError('cut2', 'safety')" class="text-[11px] px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-semibold transition">
@@ -424,12 +405,12 @@
       ["몬", "Philemon"], ["히", "Hebrews"], ["약", "James"], ["유", "Jude"], ["계", "Revelation"]
     ];
 
-    // 본문 텍스트를 순화 없이 그대로 추출하는 사전
     const CONCRETE_ELEMENTS = [
-      { keys: ["snake", "serpent", "뱀"], chip: "#땅 위의 뱀", obj: "a realistic desert serpent coiled on dusty sunlit ground", kw: "serpent" },
-      { keys: ["stick", "staff", "rod", "지팡이", "막대기"], chip: "#나무 지팡이", obj: "a rough, gnarled natural wooden shepherd stick", kw: "wooden staff" },
-      { keys: ["throw", "threw", "ground", "floor", "dust", "던지", "땅에", "바닥", "먼지"], chip: "#거친 흙바닥·던짐", bg: "a sun-baked ancient Middle Eastern dry earth and dusty desert ground under crisp afternoon light", handPose: "hands opening or reaching over sunlit dusty desert earth", kw: "desert ground" },
-      { keys: ["ran", "fear", "afraid", "tremble", "놀라", "피하", "두려", "도망"], chip: "#놀람·물러서는 긴장감", emotion: "stepping back with wide startled eyes and tense surprise", kw: "surprise" },
+      { keys: ["snake", "serpent", "뱀"], chip: "#땅 위의 뱀", obj: "a realistic desert snake coiled on dusty sunlit ground", kw: "snake" },
+      { keys: ["stick", "staff", "rod", "지팡이", "막대기"], chip: "#나무 지팡이", obj: "a rough, natural wooden shepherd stick", kw: "wooden stick" },
+      { keys: ["throw", "threw", "ground", "floor", "dust", "던지", "땅에", "바닥", "먼지"], chip: "#거친 흙바닥·던짐", bg: "a sun-baked ancient Middle Eastern dry earth and dusty desert ground under crisp afternoon light", handPose: "hands reaching or reacting over sunlit dusty desert earth", kw: "desert ground" },
+      { keys: ["ran", "fear", "afraid", "tremble", "놀라", "피하", "두려", "도망"], chip: "#놀람·물러서는 동작", emotion: "stepping back suddenly with wide startled eyes and tense alarm", kw: "alarm" },
+      { keys: ["catch", "tail", "grab", "hold", "잡으라", "잡았", "꼬리"], chip: "#손으로 잡는 동작", handPose: "a weathered human hand carefully reaching out to grab the object on the ground", kw: "grasping hand" },
       { keys: ["bush", "thorn", "fire", "flame", "burn", "떨기나무", "불꽃", "불"], chip: "#불타는 떨기나무·불꽃", obj: "a weathered desert thorn bush burning with bright warm golden flames", kw: "burning bush" },
       { keys: ["brick", "mud", "clay", "straw", "벽돌", "진흙", "짚"], chip: "#진흙 벽돌·마른 짚", obj: "a rough wooden brick mold, wet clay mud, and sparse broken dry straw", kw: "mudbrick" },
       { keys: ["worship", "bow", "heads down", "kneel", "경배", "머리 숙", "엎드려", "절하"], chip: "#머리 숙인 경배", emotion: "with head gently bowed and eyes softly closed in deep reverence and worship", handPose: "hands humbly pressed together in quiet reverence", kw: "worship" },
@@ -455,23 +436,18 @@
       { keys: ["palace", "king", "throne", "pharaoh", "궁", "왕", "보좌", "바로"], chip: "#고대 석조 회랑", bg: "a grand sunlit ancient Middle Eastern carved sandstone pillar courtyard with long afternoon shadows", kw: "ancient pillars" }
     ];
 
-    // Flow에서 에러가 났을 때만 사용자가 버튼으로 실행하는 사후 순화 사전
     const FLOW_SAFETY_REPLACEMENTS = [
-      { regex: /\bJewish\b/gi, safe: "Eastern Mediterranean", reason: "특정 민족/종교 키워드(Jewish) → 역사적 지역 표현으로 순화" },
-      { regex: /\bslave(s|ry)?\b/gi, safe: "ancient laborer", reason: "민감 단어(slave) → 고대 노동자(ancient laborer)로 순화" },
+      { regex: /\bJewish\b/gi, safe: "Eastern Mediterranean", reason: "민족/종교 키워드(Jewish) → 역사적 지역 표현으로 순화" },
+      { regex: /\bslave(s|ry)?\b/gi, safe: "ancient laborer", reason: "민감 단어(slave) → 고대 노동자로 순화" },
       { regex: /\bblood(y)?\b/gi, safe: "deep crimson liquid", reason: "유혈 표현(blood) → 붉은 액체로 순화" },
-      { regex: /\b(snake|serpent)s?\b/gi, safe: "curved desert wooden stick", reason: "생물/위협 단어(snake/serpent) → 나무 지팡이로 순화" },
+      { regex: /\b(snake|serpent)s?\b/gi, safe: "curved desert wooden stick", reason: "위협 생물(snake/serpent) → 나무 지팡이로 순화" },
       { regex: /\b(hit|beating|attack|kill|wound|scar|bleed)ing?\b/gi, safe: "weathered", reason: "폭력/상처 단어 → 세월의 흔적으로 순화" },
-      { regex: /\b(startled|fear|afraid|weary|sorrowful|despair|suffering|agony)\b/gi, safe: "thoughtful and earnest", reason: "과도한 긴장/부정 감정어 → 진지한 표정으로 순화" },
-      { regex: /\bsweat droplets\b/gi, safe: "natural skin sheen", reason: "신체 분비물 묘사 → 자연스러운 피부 윤기로 순화" },
-      { regex: /\bfrayed\b/gi, safe: "textured", reason: "훼손 단어 → 질감 묘사로 순화" },
+      { regex: /\b(startled|alarm|fear|afraid|weary|sorrowful|despair|suffering|agony)\b/gi, safe: "thoughtful and earnest", reason: "과도한 긴장/부정 감정어 → 진지한 표정으로 순화" },
       { regex: /\b(sword|spear|weapon|knife)\b/gi, safe: "wooden staff", reason: "무기 단어 → 나무 지팡이로 순화" },
       { regex: /\b(child|boy|girl|infant|baby)\b/gi, safe: "young adult", reason: "아동 실사 제한 필터 → 성인 인물로 순화" },
       { regex: /\b(naked|nude|bare)\b/gi, safe: "dressed in simple linen", reason: "노출 오해 단어 → 리넨 복장으로 순화" }
     ];
 
-    let recommendedConcepts = [];
-    let selectedConceptIdx = null;
     let originalPromptsBackup = { cut1: [], cut2: [] };
     let currentTechScore = 0;
     let hasUploadedImage = false;
@@ -574,7 +550,15 @@
       textEl.innerHTML = summaryText;
     }
 
-    async function recommendConcepts() {
+    // 영문 본문에서 직접 사건 서사 문맥 정리 (영문 입력 시 충실도 극대화)
+    function extractCleanEnglishNarrative(verse) {
+      const cleaned = verse.replace(/\d+\./g, ' ').replace(/\s+/g, ' ').trim();
+      const isMostlyEnglish = /^[A-Za-z0-9\s.,'"?!:;()\-—]+$/.test(cleaned);
+      if (!isMostlyEnglish || cleaned.length < 10) return "";
+      return cleaned.slice(0, 220);
+    }
+
+    async function generateLiteralPrompts() {
       const ref = document.getElementById('verseRef').value.trim();
       const verse = document.getElementById('verseText').value.trim();
       if (!verse && !ref) {
@@ -586,98 +570,69 @@
       errBanner.classList.add('hidden');
       errBanner.textContent = "";
 
-      selectedConceptIdx = null;
-      document.getElementById('resultsWrapper').classList.add('hidden');
-
       const extracted = extractConcreteElements(ref, verse);
       const apiKey = localStorage.getItem('gemini_api_key');
 
       if (apiKey) {
-        await recommendConceptsWithGemini(apiKey, ref, verse, extracted);
+        await generateLiteralWithGemini(apiKey, ref, verse, extracted);
       } else {
-        const result = buildTextFaithfulTop3Concepts(ref, verse, extracted);
-        recommendedConcepts = result.concepts;
-        renderImageGuideBox(result.chips, result.guideText);
-        renderConceptCards();
-        showToast("본문 텍스트 그대로 반영된 베스트 3안이 준비되었습니다!");
+        const data = buildLiteralNarrativeLocally(ref, verse, extracted);
+        renderImageGuideBox(data.chips, data.guideText);
+        applyGeneratedOutput(data.cut1, data.cut2, data.title1, data.title2, data.topicArr);
+        showToast("본문 충실 서사 직관형 프롬프트가 생성되었습니다!");
       }
     }
 
-    function buildTextFaithfulTop3Concepts(ref, verse, extracted) {
+    // 본문 충실 서사 직관형 로컬 직결 엔진
+    function buildLiteralNarrativeLocally(ref, verse, extracted) {
       const bgs = extracted.filter(e => e.bg);
       const objs = extracted.filter(e => e.obj);
       const emotions = extracted.filter(e => e.emotion);
       const hands = extracted.filter(e => e.handPose);
       const kws = extracted.map(e => e.kw).filter(Boolean);
 
-      const primaryBg = bgs[0]?.bg || "an authentic ancient Middle Eastern sunlit limestone courtyard with dusty desert air";
-      const secondaryBg = bgs[1]?.bg || "an open sun-warmed ancient sandstone hillside under clear afternoon light";
+      const primaryBg = bgs[0]?.bg || "an authentic ancient Middle Eastern sunlit desert ground and weathered raw sandstone setting";
+      const allObjsList = objs.map(o => o.obj);
+      const combinedObjs = allObjsList.length > 0
+        ? allObjsList.slice(0, 2).join(" and ")
+        : "an authentic ancient Middle Eastern wooden or clay biblical object resting on raw stone";
 
-      const primaryObj = objs[0]?.obj || "a weathered ancient wooden staff resting beside rough stone";
-      const secondaryObj = objs[1]?.obj || objs[0]?.obj || "coarse unbleached woven linen cloth over raw stone";
-
-      const primaryEmotion = emotions[0]?.emotion || "gazing thoughtfully with deep sincerity, humility, and quiet conviction";
-      const secondaryEmotion = emotions[1]?.emotion || emotions[0]?.emotion || "looking slightly upward in earnest, heartfelt devotion and trust";
-
-      const primaryHand = hands[0]?.handPose || `hands reacting naturally near ${primaryObj}`;
+      const primaryEmotion = emotions[0]?.emotion || "looking intently with earnest emotion matching the exact moment of the passage";
+      const primaryHand = hands[0]?.handPose || `weathered human hands actively interacting near ${combinedObjs}`;
+      const engNarrative = extractCleanEnglishNarrative(verse);
 
       const chips = [
         ...extracted.slice(0, 4).map(e => e.chip),
-        "#고대 중동 실사",
-        "#자연광·여백"
+        "#본문 직관 재현",
+        "#고대 중동 실사"
       ].slice(0, 6);
 
       const cleanLabels = extracted.slice(0, 4).map(e => e.chip.replace('#', '')).join(', ');
       const guideText = extracted.length > 0
-        ? `이 구절의 텍스트 그대로 <strong>[${cleanLabels}]</strong> 키워드가 살아있는 고대 중동 배경의 <strong>인물 감정 클로즈업(Cut 1)</strong>과 <strong>손·사물 클로즈업(Cut 2)</strong> 실사 이미지가 생성됩니다.`
-        : `이 구절을 바탕으로 <strong>[고대 중동 석조 배경, 묵상하는 인물의 표정, 거친 리넨 옷과 두 손, 따뜻한 자연광]</strong> 중심의 실사 스톡 이미지가 생성됩니다.`;
+        ? `이 구절의 텍스트 그대로 <strong>[${cleanLabels}]</strong> 요소가 중심이 되어, 본문 사건을 직관적으로 보여주는 <strong>인물·사건 클로즈업(Cut 1)</strong>과 <strong>손·핵심 사물 클로즈업(Cut 2)</strong> 이미지가 생성됩니다.`
+        : `입력하신 구절의 문맥에 맞춰 <strong>[고대 중동 배경, 본문 속 인물의 진실된 표정, 손과 핵심 사물]</strong>이 직관적으로 드러나는 실사 이미지가 생성됩니다.`;
 
-      const mainKeyword = extracted[0]?.chip.replace('#', '') || "말씀 묵상";
-      const objKeyword = objs[0]?.chip.replace('#', '') || "고대 성경 사물";
-      const subKeyword = objs[1]?.chip.replace('#', '') || extracted[1]?.chip.replace('#', '') || "손과 질감";
+      const narrativeClause = engNarrative
+        ? ` Faithfully depict the exact moment described here: "${engNarrative}".`
+        : "";
 
-      const topicBase = [...new Set([...kws, "faith", "ancient Middle East", "biblical"])].slice(0, 5).join(', ');
-
-      const concepts = [
-        {
-          badge: "추천 1 · 최고 판매 보편 감성형",
-          badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-          titleKr: `${mainKeyword} 중심의 감정 장면`,
-          descKr: `본문의 '${mainKeyword}' 정서를 담아 진심 어린 표정(Cut 1)과 정성스러운 손동작(Cut 2)을 구현합니다.`,
-          salesPoint: "성경 설교뿐 아니라 기도·묵상·출판물에서도 폭넓게 팔리는 보편적 감성 스톡",
-          safety: "텍스트 충실 반영 (Flow 에러 시 순화 가능)",
-          bg: primaryBg,
-          cut1: `a middle-aged ancient Middle Eastern person ${primaryEmotion}, weathered olive skin, natural beard, coarse unbleached linen tunic`,
-          cut2: `a pair of weathered sun-tanned human ${primaryHand} over sunlit raw stone`,
-          topic: topicBase
-        },
-        {
-          badge: "추천 2 · 본문 충실 서사 직관형",
-          badgeColor: "bg-sky-500/20 text-sky-300 border-sky-500/30",
-          titleKr: `${objKeyword} 그대로의 본문 장면`,
-          descKr: `텍스트 속 '${objKeyword}'와 인물 표정(Cut 1), 손·사물(Cut 2)을 본문 그대로 직관적으로 재현합니다.`,
-          salesPoint: "설교 PPT에 띄우자마자 성도들이 본문 사건을 1초 만에 이해하는 설교 최적화 구도",
-          safety: "텍스트 100% 직관 재현",
-          bg: secondaryBg,
-          cut1: `an earnest ancient Middle Eastern person ${secondaryEmotion} looking toward ${primaryObj}, weathered skin pores, coarse woven cloak`,
-          cut2: `weathered calloused human hands gesturing or positioned near ${primaryObj} on dusty earth and natural stone`,
-          topic: topicBase
-        },
-        {
-          badge: "추천 3 · 디자이너 선호 여백형",
-          badgeColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-          titleKr: `${subKeyword} & 카피스페이스`,
-          descKr: `넓은 자연 여백 속에 따뜻한 빛을 받는 인물(Cut 1)과 '${subKeyword}' 곁의 손(Cut 2)에 집중합니다.`,
-          salesPoint: "깨끗한 카피스페이스 덕분에 자막이나 제목을 얹기 좋아 스톡 디자이너가 선호",
-          safety: "상업 디자인 활용도 최상",
-          bg: primaryBg,
-          cut1: `a calm, dignified ancient Middle Eastern person in profile-three-quarter view with earnest resolve, soft golden rim light`,
-          cut2: `aged weathered human hands resting beside ${secondaryObj} on a clean sunlit raw stone surface`,
-          topic: topicBase
-        }
+      const cut1 = [
+        `Create a 16:9 cinematic wide-angle background scene of ${primaryBg}. On the left side of the frame, keep an uncluttered, open natural copy space featuring soft sunlit stone or warm atmospheric tones. Shot on a 35mm lens with natural daylight, clean commercial stock photography aesthetic, no people, no text, no watermarks.`,
+        `Keep the exact background, sunlight direction, 16:9 framing, and clean left-side copy space from the previous image. On the right side of the frame, place a close-up shot of an ancient Middle Eastern man ${primaryEmotion}, wearing coarse unbleached linen clothing, with ${combinedObjs} clearly visible in the foreground/midground.${narrativeClause} Ensure facial anatomy, eyes, nose, and posture are completely realistic and undistorted.`,
+        `Preserve the exact composition, left copy space, objects, and facial anatomy from the previous step. Enhance to ultra-detailed 8k photorealistic commercial stock photo quality shot on a 35mm lens. Render pin-sharp focus from foreground to background with realistic skin pores, authentic coarse fabric grain, ultra-detailed raw stone texture, natural golden sunlight rim lighting, and subtle floating dust motes, completely free of artifacts.`
       ];
 
-      return { chips, guideText, concepts };
+      const cut2 = [
+        `Create a 16:9 realistic ground-level background scene matching ${primaryBg}. Position a weathered, textured raw stone and dry earth surface across the lower-right area, while leaving the upper-left area as a clean, uncluttered natural copy space. Natural directional daylight casting crisp shadows. Shot on a 35mm lens, commercial stock photo style, no people, no text, no logos.`,
+        `Keep the exact ground surface, sunlight direction, and open upper-left copy space from the previous image. In the right-center foreground, place a close-up of ${primaryHand} together with ${combinedObjs}.${narrativeClause} Ensure human hands show anatomically clear, natural five-finger structure with realistic knuckles and fingernails.`,
+        `Preserve the exact composition, hand anatomy, five natural fingers, objects, and upper-left copy space from the previous step. Elevate to ultra-detailed 8k photorealistic commercial stock photography shot on a 35mm lens with pin-sharp focus from foreground to background. Emphasize realistic skin pores, weathered knuckles, ultra-detailed raw stone and earth texture, authentic coarse fabric grain at the wrists, natural directional sunlight highlights, and zero artifacts.`
+      ];
+
+      const topicArr = [...new Set([...kws, "biblical", "ancient Middle East", "faith"])];
+      const title1 = `Close up of ancient Middle Eastern man with ${allObjsList[0] ? allObjsList[0].replace(/^a\s+/, '') : 'biblical expression'} and natural copy space`;
+      const title2 = `Close up of weathered human hands with ${combinedObjs.replace(/^a\s+/, '')} in ancient Middle East with copy space`;
+
+      return { chips, guideText, cut1, cut2, title1, title2, topicArr };
     }
 
     async function fetchAvailableModels(apiKey) {
@@ -768,34 +723,30 @@
       throw new Error(firstError || "가용한 Gemini 모델을 찾지 못했습니다.");
     }
 
-    async function recommendConceptsWithGemini(apiKey, ref, verse, extracted) {
-      const btn = document.getElementById('recommendBtn');
+    async function generateLiteralWithGemini(apiKey, ref, verse, extracted) {
+      const btn = document.getElementById('generateBtn');
       btn.disabled = true;
-      btn.textContent = "⏳ Gemini AI가 본문 분석 중...";
+      btn.textContent = "⏳ Gemini AI가 본문 서사 프롬프트 작성 중...";
 
-      const prompt = `You are a top Adobe Stock creative director and biblical visual artist.
-Analyze this EXACT Bible passage (${ref || 'Bible Passage'}: "${verse}") and stay 100% FAITHFUL to the literal objects, creatures, and actions described in the text (DO NOT pre-sanitize or hide things like a snake, stick, fire, sword, etc.—describe them faithfully as in the text).
-Propose:
-1) "chips": 5 short Korean hashtag keywords describing what visual image can be generated directly from the text.
-2) "guideText": 1-2 Korean sentences explaining what kind of photorealistic image can be generated based on those keywords.
-3) "concepts": 3 DISTINCT image concepts strictly faithful to the text, optimized for Adobe Stock commercial photography. Ancient Middle Eastern realistic setting.
+      const engRef = parseEnglishBibleRef(ref);
+      const prompt = `You are a top visual storytelling artist and Adobe Stock prompt engineer.
+Analyze this EXACT Bible passage (${ref || 'Bible Passage'}: "${verse}") and create ONE direct, literal narrative concept ("본문 충실 서사 직관형") staying 100% FAITHFUL to the literal objects, creatures, actions, and emotions in the text (DO NOT pre-sanitize).
+Produce:
+1) "chips": 5 short Korean hashtag keywords describing the generated image elements.
+2) "guideText": 1-2 Korean sentences explaining what image will be generated from these keywords.
+3) "cut1": [step1, step2, step3] for Cut 1 (person emotion + literal passage event in 16:9, left copy space, 35mm lens, pin-sharp focus, skin pores, raw stone, coarse fabric, 8k). Step 2 MUST start with "Keep the exact..." and Step 3 with "Preserve the exact...".
+4) "cut2": [step1, step2, step3] for Cut 2 (weathered human hands + literal passage objects/action in 16:9, upper-left copy space, natural 5 fingers, 35mm lens, 8k). Step 2 MUST start with "Keep the exact..." and Step 3 with "Preserve the exact...".
+5) "title1", "title2": Adobe Stock English titles (under 200 chars${engRef ? `, MUST include "${engRef}"` : ''}).
+6) "keywords": array of 20 English topic keywords.
 Return STRICT JSON ONLY:
 {
   "chips": ["#키워드1", "#키워드2", "#키워드3", "#키워드4", "#키워드5"],
   "guideText": "이 구절을 바탕으로 ... 이미지가 생성됩니다.",
-  "concepts": [
-    {
-      "badge": "추천 1 · 최고 판매 보편 감성형",
-      "titleKr": "짧은 한글 제목",
-      "descKr": "Cut 1(인물)과 Cut 2(손/사물) 장면 요약 (한글 1~2문장)",
-      "salesPoint": "어도비 스톡에서 잘 팔리는 이유 (한글 1문장)",
-      "safety": "텍스트 충실 반영",
-      "bg": "English Step 1 ancient Middle Eastern background description",
-      "cut1": "English Cut 1 single person close-up description",
-      "cut2": "English Cut 2 weathered human hands & literal object close-up description",
-      "topic": "3-5 English topic words comma separated"
-    }
-  ]
+  "cut1": ["step1", "step2", "step3"],
+  "cut2": ["step1", "step2", "step3"],
+  "title1": "...",
+  "title2": "...",
+  "keywords": ["kw1", "kw2"]
 }`;
 
       try {
@@ -805,109 +756,27 @@ Return STRICT JSON ONLY:
         });
         const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleaned);
-        const colors = [
-          "bg-amber-500/20 text-amber-300 border-amber-500/30",
-          "bg-sky-500/20 text-sky-300 border-sky-500/30",
-          "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-        ];
-        recommendedConcepts = (parsed.concepts || []).slice(0, 3).map((item, idx) => ({ ...item, badgeColor: colors[idx] || colors[0] }));
+
         renderImageGuideBox(parsed.chips || [], parsed.guideText || "");
-        renderConceptCards();
-        showToast("Gemini AI 본문 분석 완료!");
+        applyGeneratedOutput(parsed.cut1, parsed.cut2, parsed.title1, parsed.title2, parsed.keywords || []);
+        showToast("Gemini AI 본문 충실 프롬프트 작성 완료!");
       } catch (e) {
         const errBanner = document.getElementById('apiErrorBanner');
         errBanner.classList.remove('hidden');
-        errBanner.innerHTML = `<strong>⚠️ Gemini API 안내:</strong> ${e.message}<br/><span class="text-slate-300">→ 내장된 텍스트 충실 분석 엔진으로 본문 그대로 추천했습니다.</span>`;
-        const result = buildTextFaithfulTop3Concepts(ref, verse, extracted);
-        recommendedConcepts = result.concepts;
-        renderImageGuideBox(result.chips, result.guideText);
-        renderConceptCards();
+        errBanner.innerHTML = `<strong>⚠️ Gemini API 안내:</strong> ${e.message}<br/><span class="text-slate-300">→ 내장된 로컬 서사 직관형 엔진으로 본문 그대로 작성했습니다.</span>`;
+        const data = buildLiteralNarrativeLocally(ref, verse, extracted);
+        renderImageGuideBox(data.chips, data.guideText);
+        applyGeneratedOutput(data.cut1, data.cut2, data.title1, data.title2, data.topicArr);
       } finally {
         btn.disabled = false;
-        btn.textContent = "💡 본문 기반 판매 베스트 3안 추천받기";
+        btn.textContent = "✨ 본문 충실 서사 직관형 프롬프트 생성";
       }
     }
 
-    function renderConceptCards() {
-      document.getElementById('emptyResultState').classList.add('hidden');
-      document.getElementById('conceptSection').classList.remove('hidden');
-
-      const grid = document.getElementById('conceptCardsGrid');
-      grid.innerHTML = recommendedConcepts.map((c, idx) => `
-        <div onclick="selectConcept(${idx})" id="conceptCard_${idx}"
-          class="rounded-2xl bg-slate-950 border-2 border-slate-800 hover:border-slate-600 p-4 cursor-pointer transition flex flex-col justify-between space-y-3">
-          <div class="space-y-2.5">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-[11px] font-bold px-2 py-0.5 rounded-md border ${c.badgeColor}">${c.badge}</span>
-              <span id="checkMark_${idx}" class="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-xs text-transparent">✓</span>
-            </div>
-            <h3 class="text-sm font-bold text-white leading-snug">${c.titleKr}</h3>
-            <p class="text-xs text-slate-300 leading-relaxed">${c.descKr}</p>
-          </div>
-          <div class="pt-2.5 border-t border-slate-800/80 space-y-1.5">
-            <div class="text-[11px] text-amber-300/90 leading-snug">
-              <strong class="text-amber-400">판매 포인트:</strong> ${c.salesPoint}
-            </div>
-            <div class="text-[11px] text-emerald-400 font-semibold">
-              ✦ ${c.safety}
-            </div>
-          </div>
-        </div>
-      `).join('');
-
-      updateConfirmBtn();
-    }
-
-    function selectConcept(idx) {
-      selectedConceptIdx = idx;
-      recommendedConcepts.forEach((_, i) => {
-        const card = document.getElementById(`conceptCard_${i}`);
-        const mark = document.getElementById(`checkMark_${i}`);
-        if (i === idx) {
-          card.className = "rounded-2xl bg-amber-500/5 border-2 border-amber-500 p-4 cursor-pointer transition flex flex-col justify-between space-y-3 shadow-lg shadow-amber-500/10";
-          mark.className = "w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-xs";
-        } else {
-          card.className = "rounded-2xl bg-slate-950 border-2 border-slate-800 hover:border-slate-600 p-4 cursor-pointer transition flex flex-col justify-between space-y-3 opacity-80";
-          mark.className = "w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-xs text-transparent";
-        }
-      });
-      updateConfirmBtn();
-    }
-
-    function updateConfirmBtn() {
-      const btn = document.getElementById('confirmGenerateBtn');
-      if (selectedConceptIdx === null) {
-        btn.disabled = true;
-        btn.className = "w-full md:w-auto px-6 py-3 rounded-xl bg-slate-800 text-slate-500 font-bold text-sm transition cursor-not-allowed";
-        btn.textContent = "위 카드 중 1가지를 먼저 선택하세요";
-      } else {
-        const chosen = recommendedConcepts[selectedConceptIdx];
-        btn.disabled = false;
-        btn.className = "w-full md:w-auto px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/15 cursor-pointer";
-        btn.textContent = `✨ [${chosen.titleKr}] 콘셉트로 Flow 3단계 프롬프트 생성하기`;
-      }
-    }
-
-    function generateFromSelectedConcept() {
-      if (selectedConceptIdx === null) return;
-      const chosen = recommendedConcepts[selectedConceptIdx];
-      document.getElementById('selectedConceptBadge').textContent = `선택됨: ${chosen.titleKr}`;
+    function applyGeneratedOutput(cut1Steps, cut2Steps, rawTitle1, rawTitle2, topicArr) {
+      const engRef = parseEnglishBibleRef(document.getElementById('verseRef').value);
       document.getElementById('cut1FixNotice').classList.add('hidden');
       document.getElementById('cut2FixNotice').classList.add('hidden');
-
-      const engRef = parseEnglishBibleRef(document.getElementById('verseRef').value);
-
-      const cut1Steps = [
-        `Create a 16:9 cinematic wide-angle background scene of ${chosen.bg}. On the left two-thirds of the frame, keep an uncluttered, open natural copy space featuring soft sunlit stone or warm atmospheric tones. Shot on a 35mm lens with natural daylight, clean commercial stock photography aesthetic, no people, no text, no watermarks.`,
-        `Keep the exact background, sunlight direction, 16:9 framing, and clean left-side copy space from the previous image. On the right third of the frame, place a close-up portrait of ${chosen.cut1} in profile-three-quarter view. Ensure facial anatomy, eyes, nose, and natural neck posture are completely realistic and undistorted.`,
-        `Preserve the exact composition, left copy space, and facial anatomy from the previous step. Enhance to ultra-detailed 8k photorealistic commercial stock photo quality shot on a 35mm lens. Render pin-sharp focus from foreground to background with realistic skin pores, authentic coarse fabric grain, ultra-detailed raw stone texture, natural golden sunlight rim lighting, and subtle floating dust motes, completely free of artifacts.`
-      ];
-
-      const cut2Steps = [
-        `Create a 16:9 realistic ground-level background scene matching ${chosen.bg}. Position a weathered, textured raw stone work surface across the lower-right area, while leaving the upper-left area as a clean, uncluttered natural copy space of warm sunlit earth or stone tones. Natural directional daylight casting crisp shadows. Shot on a 35mm lens, commercial stock photo style, no people, no text, no logos.`,
-        `Keep the exact stone surface, sunlight direction, and open upper-left copy space from the previous image. In the right-center foreground, place a close-up of ${chosen.cut2}. Ensure both hands show anatomically clear, natural five-finger structure with realistic knuckles and fingernails in a natural relaxed posture.`,
-        `Preserve the exact composition, hand anatomy, five natural fingers, and upper-left copy space from the previous step. Elevate to ultra-detailed 8k photorealistic commercial stock photography shot on a 35mm lens with pin-sharp focus from foreground to background. Emphasize realistic skin pores, weathered knuckles, ultra-detailed raw stone texture, authentic coarse fabric grain at the wrists, natural directional sunlight highlights, and zero artifacts.`
-      ];
 
       originalPromptsBackup.cut1 = [...cut1Steps];
       originalPromptsBackup.cut2 = [...cut2Steps];
@@ -915,30 +784,25 @@ Return STRICT JSON ONLY:
       renderEditableSteps('cut1Steps', cut1Steps, 'c1');
       renderEditableSteps('cut2Steps', cut2Steps, 'c2');
 
-      const topicArr = chosen.topic.split(',').map(s => s.trim()).filter(Boolean);
-      const tMain = topicArr.slice(0, 3).join(', ');
-      const rawTitle1 = `Close up portrait of ${chosen.cut1.split(',')[0]} with natural copy space reflecting ${tMain}`;
-      const rawTitle2 = `Close up of ${chosen.cut2.split(',')[0]} in ancient Middle East with natural copy space`;
-
       document.getElementById('cut1Title').value = formatAdobeTitle(rawTitle1, engRef);
       document.getElementById('cut2Title').value = formatAdobeTitle(rawTitle2, engRef);
 
       const refBookKw = engRef ? engRef.split(' ')[0] : null;
       const baseKw1 = [
         ...(refBookKw ? [engRef, refBookKw] : []),
-        ...topicArr, "ancient", "Middle Eastern", "biblical", "portrait", "close up", "copy space", "coarse linen", "sandstone", "natural sunlight", "weathered", "faith", "hope", "reflection", "historical", "35mm", "photorealistic", "commercial stock", "storytelling", "emotion", "serenity"
+        ...topicArr, "ancient", "Middle Eastern", "biblical", "portrait", "close up", "copy space", "coarse linen", "sandstone", "natural sunlight", "weathered", "faith", "storytelling", "historical", "35mm", "photorealistic", "commercial stock", "emotion", "dramatic light"
       ];
       const baseKw2 = [
         ...(refBookKw ? [engRef, refBookKw] : []),
-        ...topicArr, "human hands", "close up", "ancient", "Middle East", "biblical", "raw stone", "craftsmanship", "coarse fabric", "copy space", "sunlight", "weathered hands", "texture", "historical", "devotion", "tradition", "natural light", "35mm", "photorealistic", "rustic", "authentic", "earth tones"
+        ...topicArr, "human hands", "close up", "ancient", "Middle East", "biblical", "raw stone", "craftsmanship", "coarse fabric", "copy space", "sunlight", "weathered hands", "texture", "historical", "natural light", "35mm", "photorealistic", "rustic", "authentic", "earth tones"
       ];
 
       document.getElementById('cut1Keywords').value = [...new Set(baseKw1)].slice(0, 25).join(', ');
       document.getElementById('cut2Keywords').value = [...new Set(baseKw2)].slice(0, 25).join(', ');
 
+      document.getElementById('emptyResultState').classList.add('hidden');
       document.getElementById('resultsWrapper').classList.remove('hidden');
       document.getElementById('resultsWrapper').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      showToast("텍스트에 충실한 프롬프트가 생성되었습니다!");
     }
 
     function renderEditableSteps(containerId, stepTexts, prefix) {
@@ -979,6 +843,7 @@ Return STRICT JSON ONLY:
               appliedReasons.push(rule.reason);
             }
           }
+          // 본문 인용구("Faithfully depict...")에 민감 단어가 남아있다면 함께 정리
           text = text.replace(/completely free of artifacts or distortion\.?/gi, "clean natural camera photography.");
           text = text.replace(/completely free of artifacts\.?/gi, "clean natural camera photography.");
         } else if (mode === 'simplify') {
@@ -986,8 +851,8 @@ Return STRICT JSON ONLY:
             text = text.replace(/, no people, no text, no (watermarks|logos)\./gi, ", clean empty natural scene.");
           } else if (i === 1) {
             text = text
-              .replace(/Ensure facial anatomy, eyes, nose, and natural neck posture are completely realistic and undistorted\./gi, "Natural relaxed realistic posture.")
-              .replace(/Ensure both hands show anatomically clear, natural five-finger structure with realistic knuckles and fingernails in a natural relaxed posture\./gi, "Natural relaxed five-finger hand posture.")
+              .replace(/Ensure facial anatomy, eyes, nose, and posture are completely realistic and undistorted\./gi, "Natural relaxed realistic posture.")
+              .replace(/Ensure human hands show anatomically clear, natural five-finger structure with realistic knuckles and fingernails\./gi, "Natural relaxed five-finger hand posture.")
               .replace(/Keep the exact (.*?) from the previous image\./gi, "Keeping the previous background and lighting,");
           } else if (i === 2) {
             text = "Keeping the exact composition and subject from the previous image, enhance fine natural lighting, raw stone and coarse linen texture, realistic skin detail, and crisp 35mm photography sharpness.";
@@ -1004,7 +869,7 @@ Return STRICT JSON ONLY:
       } else {
         noticeEl.innerHTML = `<strong>ℹ️ 안내:</strong> 추가 민감어가 없었습니다. 여전히 에러가 뜨면 <strong>[⚡ 지시 단순화]</strong>를 누르거나 Step 2 문장을 직접 고쳐보세요.`;
       }
-      showToast("Flow 에러 대응 순화 수정이 적용되었습니다!");
+      showToast("Flow 에러 대응 수정이 적용되었습니다!");
     }
 
     function restoreOriginal(cutKey) {
@@ -1023,11 +888,8 @@ Return STRICT JSON ONLY:
       document.getElementById('verseRef').value = "";
       document.getElementById('verseText').value = "";
       updateDetectedRef();
-      recommendedConcepts = [];
-      selectedConceptIdx = null;
       document.getElementById('imageGuideBox').classList.add('hidden');
       document.getElementById('apiErrorBanner').classList.add('hidden');
-      document.getElementById('conceptSection').classList.add('hidden');
       document.getElementById('resultsWrapper').classList.add('hidden');
       document.getElementById('emptyResultState').classList.remove('hidden');
       showToast("모든 입력과 결과가 초기화되었습니다.");
@@ -1041,13 +903,16 @@ Return STRICT JSON ONLY:
         showToast("성경 출처 또는 본문을 먼저 입력하세요!");
         return;
       }
-      const master = `Act as a top image artist and Adobe Stock best-seller strategist. Based strictly on this Bible passage (${ref}${engRef ? ` / ${engRef}` : ''}):
+      const master = `Act as a top image artist and Adobe Stock prompt engineer. Based strictly on this Bible passage (${ref}${engRef ? ` / ${engRef}` : ''}):
 "${verse}"
 
-First, explain with keywords what kind of images can be generated faithfully from the text (DO NOT pre-sanitize objects/creatures mentioned in the text), then recommend 3 high-selling Adobe Stock visual concepts (1: Universal Emotion, 2: Direct Literal Narrative, 3: Designer Copy-Space) and ask me which one to generate.
-Rules:
-- 16:9, Ancient Middle Eastern realistic setting, natural copy space, 35mm lens, pin-sharp focus, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, natural 5 fingers, 8k commercial stock photo.
-- Format as Flow 3-step prompts (Step 1 Space, Step 2 Keep background... Place materials, Step 3 Preserve composition... Details) for Cut 1 & Cut 2, plus Adobe Stock English Title (include "${engRef || 'Exodus 4'}") and 25 Keywords.`;
+Create ONE literal, faithful biblical narrative concept ("본문 충실 서사 직관형") — DO NOT pre-sanitize objects or creatures mentioned in the text.
+First, briefly explain with 5 Korean keywords what image will be generated.
+Then output Flow 3-step prompts (Step 1 Space & background, Step 2 Keep exact background... Place literal materials/event, Step 3 Preserve exact composition... 8k details) for:
+- Cut 1 (person emotion + literal passage event)
+- Cut 2 (weathered human hands + literal objects/action)
+Specs: 16:9, Ancient Middle Eastern realistic setting, natural copy space, 35mm lens, pin-sharp focus, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, natural 5 fingers, 8k commercial stock photo.
+Also provide Adobe Stock English Title (under 200 chars, include "${engRef || 'Exodus 4'}") and 25 English Keywords for each cut.`;
       navigator.clipboard.writeText(master);
       showToast("Gemini/ChatGPT 웹 복사용 마스터 요청문이 복사되었습니다!");
     }
