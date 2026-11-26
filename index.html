@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bible Flow Studio v0.1.2 — 본문 충실 프롬프트 · Reverse Prompting · 승인 검수</title>
+  <title>Bible Flow Studio v0.2 — 본문 충실 프롬프트 · Reverse Prompting · 승인 검수</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
@@ -24,7 +24,7 @@
           <div class="flex items-center gap-2">
             <h1 class="text-lg font-bold tracking-tight text-white">Bible Flow Studio</h1>
             <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
-              v0.1.1
+              v0.2
             </span>
           </div>
           <p class="text-xs text-slate-400">본문 충실 프롬프트 · Reverse Prompting · 승인 검수</p>
@@ -70,7 +70,7 @@
         <div class="flex items-start justify-between gap-2">
           <div>
             <h2 class="text-base font-bold text-amber-400 mb-1">본문 충실 프롬프트</h2>
-            <p class="text-xs text-slate-400">성경 구절을 순화 없이 그대로 반영해 16:9 황금비율 구도로 프롬프트를 작성합니다.</p>
+            <p class="text-xs text-slate-400">성경 본문과 원하시는 장면 묘사를 결합해 16:9 황금비율 프롬프트를 작성합니다.</p>
           </div>
           <button type="button" onclick="resetAll()" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0">
             초기화
@@ -88,8 +88,18 @@
 
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1.5">성경 본문 (한글 또는 영문)</label>
-          <textarea id="verseText" rows="8" oninput="updateDetectedRef()" placeholder="성경 구절을 여기에 입력하거나 붙여넣으세요..."
+          <textarea id="verseText" rows="5" oninput="updateDetectedRef()" placeholder="성경 구절을 여기에 입력하거나 붙여넣으세요..."
             class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 leading-relaxed"></textarea>
+        </div>
+
+        <!-- User's Custom Scene Direction (100% Priority) -->
+        <div class="p-3 rounded-xl bg-amber-500/5 border border-amber-500/40 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-amber-300">🎬 내가 원하는 장면 묘사 (100% 최우선 반영)</label>
+          </div>
+          <textarea id="userSceneDesc" rows="3" placeholder="예: 이스라엘 백성들이 벽돌을 만드는데 더 고생하는 장면 (여기에 적으신 내용이 가장 우선 반영됩니다)"
+            class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400 leading-relaxed"></textarea>
+          <p class="text-[11px] text-slate-400">한글·영문 모두 가능하며, 비워두면 본문 전체를 기준으로 작성합니다.</p>
         </div>
 
         <div class="grid grid-cols-1 gap-2.5 pt-1">
@@ -120,9 +130,9 @@
           <div class="text-4xl">📖</div>
           <h3 class="text-base font-bold text-slate-200">프롬프트 창이 비어 있습니다</h3>
           <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-            왼쪽에 <strong>성경 출처</strong>와 <strong>본문</strong>을 입력한 뒤<br/>
+            왼쪽에 <strong>성경 본문</strong>과 <strong>원하시는 장면 묘사</strong>를 입력한 뒤<br/>
             <span class="text-amber-400 font-semibold">[✨ 본문 충실 프롬프트 생성]</span>을 누르시면,<br/>
-            16:9 황금비율 구도의 Flow 3단계 프롬프트가 즉시 작성됩니다.
+            회원님 의견이 100% 반영된 16:9 황금비율 프롬프트가 작성됩니다.
           </p>
         </div>
 
@@ -131,7 +141,7 @@
           <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-4">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="text-sm font-bold text-white">Flow 3단계 프롬프트</span>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">본문 충실 · 16:9 황금비율</span>
+              <span id="directorPriorityBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">본문 충실 · 16:9 황금비율</span>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
               <a href="https://flow.google.com" target="_blank" rel="noopener noreferrer"
@@ -147,7 +157,7 @@
           <div class="bg-slate-900/90 border border-rose-500/30 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
             <div class="text-xs text-slate-300 space-y-0.5">
               <div class="font-bold text-rose-300">🚫 구글 Flow에서 "이미지를 만들 수 없습니다" 에러가 떴나요?</div>
-              <div class="text-slate-400">먼저 본문 그대로 생성해 보시고, Flow가 거부할 때만 우측의 <strong>[🛡️ 안전 필터 우회 수정]</strong>을 눌러 순화하세요.</div>
+              <div class="text-slate-400">먼저 생성해 보시고, Flow가 거부할 때만 우측의 <strong>[🛡️ 안전 필터 우회 수정]</strong>을 눌러 순화하세요.</div>
             </div>
           </div>
 
@@ -155,7 +165,7 @@
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
               <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Cut 1 · 본문 인물·사건 클로즈업</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Cut 1 · 인물·장면 클로즈업</span>
                 <h3 class="text-sm font-semibold text-white mt-0.5">16:9 황금비율 캐릭터 배치 · Flow 순차 입력용</h3>
               </div>
               <div class="flex flex-wrap items-center gap-1.5">
@@ -196,7 +206,7 @@
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
               <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Cut 2 · 손과 본문 핵심 사물 클로즈업</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Cut 2 · 손과 핵심 사물 클로즈업</span>
                 <h3 class="text-sm font-semibold text-white mt-0.5">16:9 황금비율 손·사물 배치 · 고승인률 구도</h3>
               </div>
               <div class="flex flex-wrap items-center gap-1.5">
@@ -241,7 +251,6 @@
   <main id="tab2" class="hidden max-w-7xl mx-auto px-4 py-6 space-y-6">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
-      <!-- Left: Sample Upload & Visual Trait Extractor -->
       <section class="lg:col-span-5 space-y-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
           <div class="flex items-start justify-between">
@@ -265,7 +274,6 @@
             <div id="sampleAutoVisualInfo" class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-1"></div>
           </div>
 
-          <!-- Sample Description Helper -->
           <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-sky-400">샘플 장면 요소 (API 없을 때 직접 지정 가능)</span>
@@ -299,7 +307,6 @@
         </div>
       </section>
 
-      <!-- Right: Sample Reverse Prompt Output -->
       <section class="lg:col-span-7 space-y-5">
         <div id="sampleEmptyState" class="bg-slate-900 border border-dashed border-slate-800 rounded-2xl p-14 text-center space-y-3">
           <div class="text-4xl">🎨</div>
@@ -362,7 +369,6 @@
   <main id="tab3" class="hidden max-w-7xl mx-auto px-4 py-6 space-y-6">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
-      <!-- Upload & Visual Preview -->
       <section class="lg:col-span-6 space-y-4">
         <div id="dropZone" onclick="document.getElementById('imageInput').click()"
           class="border-2 border-dashed border-slate-700 hover:border-amber-500 bg-slate-900 rounded-2xl p-8 text-center cursor-pointer transition">
@@ -379,7 +385,6 @@
           </div>
           <img id="previewImg" class="w-full rounded-xl border border-slate-800 object-contain max-h-80 bg-black" alt="Preview" />
 
-          <!-- Corner Watermark Loupe -->
           <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5">
             <div class="flex items-center justify-between mb-2">
               <span class="text-xs font-bold text-rose-400">🔍 우측 하단 AI 워터마크 400% 확대 감시창</span>
@@ -396,7 +401,6 @@
         </div>
       </section>
 
-      <!-- Audit Report -->
       <section class="lg:col-span-6 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-5">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
@@ -546,8 +550,9 @@
       { keys: ["ran from", "fear", "afraid", "tremble", "놀라", "피하", "두려", "도망"], chip: "#놀람·물러서는 동작", emotion: "stepping back suddenly with wide startled eyes and tense alarm", kw: "alarm" },
       { keys: ["catch", "tail", "grab", "잡으라", "잡았", "꼬리"], exact: true, chip: "#손으로 잡는 동작", handPose: "a weathered human hand carefully reaching out to grab the object on the ground", kw: "grasping hand" },
       { keys: ["bush", "thorn", "fire", "flame", "burn", "떨기나무", "불꽃", "불"], exact: true, chip: "#불타는 떨기나무·불꽃", obj: "a weathered desert thorn bush burning with bright warm golden flames", kw: "burning bush" },
-      { keys: ["brick", "mud", "clay", "straw", "벽돌", "진흙", "짚"], exact: true, chip: "#진흙 벽돌·마른 짚", obj: "a rough wooden brick mold, wet clay mud, and sparse broken dry straw", kw: "mudbrick" },
-      { keys: ["매를 맞", "맞사오니", "채찍", "구타", "beat", "hit"], chip: "#고된 노동·시련의 표정", emotion: "looking upward with deeply troubled, earnest sorrow and quiet endurance", kw: "hardship" },
+      { keys: ["brick", "mud", "clay", "straw", "벽돌", "진흙", "짚"], exact: true, chip: "#진흙 벽돌·마른 짚", bg: "an ancient Middle Eastern outdoor mudbrick yard under harsh desert sunlight with weathered sandstone walls and stacks of sun-dried clay bricks", obj: "a rough wooden brick mold filled with wet dark mud beside sparse dry straw and cracked unfired mudbricks", handPose: "weathered, dust-covered human hands straining to mold rough mudbricks without enough straw", kw: "mudbrick" },
+      { keys: ["고생", "힘들", "고통", "지친", "무겁", "수고", "struggl", "toil", "exhaust", "매를 맞", "맞사오니", "채찍", "구타", "beat", "hit"], chip: "#고된 노동·힘겨운 표정", emotion: "with sweat and clay dust on his brow, showing exhausted endurance and deep strain from relentless hard labor", kw: "hard labor" },
+      { keys: ["이스라엘", "백성", "사람들", "노동자", "일꾼", "people", "workers", "israel"], chip: "#고대 히브리 노동자", kw: "ancient workers" },
       { keys: ["worship", "bow", "heads down", "kneel", "경배", "머리 숙", "엎드려", "절하"], exact: true, chip: "#머리 숙인 경배", emotion: "with head gently bowed and eyes softly closed in deep reverence and worship", handPose: "hands humbly pressed together in quiet reverence", kw: "worship" },
       { keys: ["pray", "prayer", "supplication", "기도", "간구", "부르짖"], exact: true, chip: "#간절한 기도", emotion: "looking slightly skyward in earnest, sincere silent prayer", handPose: "weathered hands folded gently in earnest prayer", kw: "prayer" },
       { keys: ["believed", "believe", "faith", "sign", "wonder", "믿었", "믿음", "표적", "이적"], exact: true, chip: "#믿음·경외의 시선", emotion: "gazing forward with awe-struck eyes filled with deep belief and conviction", kw: "faith" },
@@ -576,7 +581,7 @@
       { regex: /\bblood(y)?\b/gi, safe: "deep crimson liquid", reason: "유혈 표현(blood) → 붉은 액체로 순화" },
       { regex: /\b(snake|serpent)s?\b/gi, safe: "curved desert wooden stick", reason: "위협 생물(snake/serpent) → 나무 지팡이로 순화" },
       { regex: /\b(hit|beating|attack|kill|wound|scar|bleed)ing?\b/gi, safe: "weathered", reason: "폭력/상처 단어 → 세월의 흔적으로 순화" },
-      { regex: /\b(startled|alarm|fear|afraid|weary|sorrowful|despair|suffering|agony)\b/gi, safe: "thoughtful and earnest", reason: "과도한 긴장/부정 감정어 → 진지한 표정으로 순화" },
+      { regex: /\b(startled|alarm|fear|afraid|weary|sorrowful|despair|suffering|agony|exhausted)\b/gi, safe: "thoughtful and earnest", reason: "과도한 긴장/부정 감정어 → 진지한 표정으로 순화" },
       { regex: /\b(sword|spear|weapon|knife)\b/gi, safe: "wooden staff", reason: "무기 단어 → 나무 지팡이로 순화" },
       { regex: /\b(child|boy|girl|infant|baby)\b/gi, safe: "young adult", reason: "아동 실사 제한 필터 → 성인 인물로 순화" },
       { regex: /\b(naked|nude|bare)\b/gi, safe: "dressed in simple linen", reason: "노출 오해 단어 → 리넨 복장으로 순화" }
@@ -601,7 +606,7 @@
     }
 
     function setupDropZones() {
-      const bindDrop = (elId, handler) => {
+      const bindDrop = function(elId, handler) {
         const el = document.getElementById(elId);
         if (!el) return;
         el.addEventListener('dragover', function(e) { e.preventDefault(); el.classList.add('border-amber-500'); });
@@ -750,16 +755,24 @@
       return textLower.indexOf(k) !== -1;
     }
 
-    function extractConcreteElements(ref, verse) {
-      const combined = (ref + " " + verse).toLowerCase();
+    function extractConcreteElements(ref, verse, userScene) {
+      const sceneLower = (userScene || "").toLowerCase();
+      const restLower = (ref + " " + verse).toLowerCase();
       const matched = [];
+
       for (let i = 0; i < CONCRETE_ELEMENTS.length; i++) {
         const el = CONCRETE_ELEMENTS[i];
         let hits = 0;
+        let fromUser = false;
         for (let j = 0; j < el.keys.length; j++) {
-          if (matchKeyword(combined, el.keys[j], el.exact)) hits++;
+          if (sceneLower && matchKeyword(sceneLower, el.keys[j], el.exact)) {
+            hits += 5;
+            fromUser = true;
+          } else if (matchKeyword(restLower, el.keys[j], el.exact)) {
+            hits += 1;
+          }
         }
-        if (hits > 0) matched.push(Object.assign({}, el, { hits: hits }));
+        if (hits > 0) matched.push(Object.assign({}, el, { hits: hits, fromUser: fromUser }));
       }
       matched.sort(function(a, b) { return b.hits - a.hits; });
       return matched;
@@ -774,37 +787,48 @@
       document.getElementById('imageGuideText').innerHTML = summaryText;
     }
 
-    function extractCleanEnglishNarrative(verse) {
-      const cleaned = verse.replace(/\d+\./g, ' ').replace(/\s+/g, ' ').trim();
+    function extractCleanEnglishSnippet(txt) {
+      const cleaned = (txt || "").replace(/\d+\./g, ' ').replace(/\s+/g, ' ').trim();
       const matches = cleaned.match(/[A-Za-z]/g);
       const asciiRatio = (matches ? matches.length : 0) / Math.max(1, cleaned.length);
-      if (asciiRatio < 0.5 || cleaned.length < 10) return "";
+      if (asciiRatio < 0.5 || cleaned.length < 6) return "";
       return cleaned.slice(0, 280);
     }
 
     async function generateLiteralPrompts() {
       const ref = document.getElementById('verseRef').value.trim();
       const verse = document.getElementById('verseText').value.trim();
-      if (!verse && !ref) {
-        showToast("먼저 성경 출처나 성경 본문을 입력해 주세요!");
+      const userScene = document.getElementById('userSceneDesc').value.trim();
+
+      if (!verse && !ref && !userScene) {
+        showToast("성경 본문이나 원하시는 장면 묘사를 입력해 주세요!");
         return;
       }
 
       document.getElementById('apiErrorBanner').classList.add('hidden');
-      const extracted = extractConcreteElements(ref, verse);
+      const extracted = extractConcreteElements(ref, verse, userScene);
       const apiKey = localStorage.getItem('gemini_api_key');
 
-      if (apiKey) {
-        await generateLiteralWithGemini(apiKey, ref, verse, extracted);
+      const priorityBadge = document.getElementById('directorPriorityBadge');
+      if (userScene) {
+        priorityBadge.textContent = "사용자 장면 최우선 반영 · 16:9 황금비율";
+        priorityBadge.className = "text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40";
       } else {
-        const data = buildLiteralNarrativeLocally(ref, verse, extracted);
+        priorityBadge.textContent = "본문 충실 · 16:9 황금비율";
+        priorityBadge.className = "text-xs px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30";
+      }
+
+      if (apiKey) {
+        await generateLiteralWithGemini(apiKey, ref, verse, userScene, extracted);
+      } else {
+        const data = buildLiteralNarrativeLocally(ref, verse, userScene, extracted);
         renderImageGuideBox(data.chips, data.guideText);
         applyGeneratedOutput(data.cut1, data.cut2, data.title1, data.title2, data.topicArr);
-        showToast("16:9 황금비율 본문 충실 프롬프트가 생성되었습니다!");
+        showToast(userScene ? "회원님 장면 묘사가 최우선 반영되었습니다!" : "16:9 황금비율 본문 충실 프롬프트가 생성되었습니다!");
       }
     }
 
-    function buildLiteralNarrativeLocally(ref, verse, extracted) {
+    function buildLiteralNarrativeLocally(ref, verse, userScene, extracted) {
       const bgs = extracted.filter(function(e) { return Boolean(e.bg); });
       const objs = extracted.filter(function(e) { return Boolean(e.obj); });
       const emotions = extracted.filter(function(e) { return Boolean(e.emotion); });
@@ -816,21 +840,29 @@
         ? "featuring " + objs.slice(0, 2).map(function(o) { return o.obj; }).join(" and ")
         : "wearing coarse unbleached ancient linen clothing";
 
-      const primaryEmotion = emotions[0] ? emotions[0].emotion : "showing authentic facial emotion directly reflecting the passage";
-      const primaryHand = hands[0] ? hands[0].handPose : "weathered human hands performing the exact action described in the text";
-      const engNarrative = extractCleanEnglishNarrative(verse);
+      const primaryEmotion = emotions[0] ? emotions[0].emotion : "showing authentic facial emotion directly reflecting the scene";
+      const primaryHand = hands[0] ? hands[0].handPose : "weathered human hands performing the exact labor or action described";
 
-      const chips = extracted.slice(0, 4).map(function(e) { return e.chip; })
-        .concat(["#본문 직결 서사", "#16:9 황금비율"]).slice(0, 6);
+      const engScene = extractCleanEnglishSnippet(userScene);
+      const engVerse = extractCleanEnglishSnippet(verse);
+
+      const chips = (userScene ? ["#사용자 장면 최우선"] : [])
+        .concat(extracted.slice(0, 4).map(function(e) { return e.chip; }))
+        .concat(["#16:9 황금비율"]).slice(0, 6);
 
       const cleanLabels = extracted.slice(0, 4).map(function(e) { return e.chip.replace('#', ''); }).join(', ');
-      const guideText = extracted.length > 0
-        ? "이 구절의 텍스트 그대로 <strong>[" + cleanLabels + "]</strong> 키워드와 입력된 본문 문맥이 16:9 황금비율 구도 안에 그대로 반영된 <strong>인물·사건(Cut 1)</strong>과 <strong>손·행동(Cut 2)</strong> 이미지가 생성됩니다."
-        : '입력하신 본문 텍스트 문맥 자체를 Flow에 직접 전달하여 <strong>[16:9 황금비율, 고대 중동 실사, 본문 그대로의 인물 표정과 손동작]</strong> 이미지가 생성됩니다.<br/><span class="text-sky-300">💡 한글 본문의 경우 더 정밀한 번역을 원하시면 [📋 무료 웹용 마스터 요청문 복사]를 함께 활용하세요.</span>';
+      let guideText = "";
+      if (userScene) {
+        guideText = '요청하신 장면 <strong>"' + userScene + '"</strong>을(를) 100% 최우선으로 반영하여, <strong>[' + (cleanLabels || '고대 중동 실사') + ']</strong> 중심의 <strong>인물·사건(Cut 1)</strong>과 <strong>손·사물(Cut 2)</strong> 이미지가 16:9 황금비율로 생성됩니다.';
+      } else if (extracted.length > 0) {
+        guideText = "이 구절의 텍스트 그대로 <strong>[" + cleanLabels + "]</strong> 키워드와 입력된 본문 문맥이 16:9 황금비율 구도 안에 그대로 반영된 <strong>인물·사건(Cut 1)</strong>과 <strong>손·행동(Cut 2)</strong> 이미지가 생성됩니다.";
+      } else {
+        guideText = '입력하신 본문 텍스트 문맥 자체를 Flow에 직접 전달하여 <strong>[16:9 황금비율, 고대 중동 실사, 본문 그대로의 인물 표정과 손동작]</strong> 이미지가 생성됩니다.';
+      }
 
-      const narrativeClause = engNarrative
-        ? ' Strictly depict this exact biblical narrative scene: "' + engNarrative + '".'
-        : "";
+      const narrativeClause = engScene
+        ? ' Strictly depict this required scene: "' + engScene + '".'
+        : (engVerse ? ' Strictly depict this exact biblical narrative scene: "' + engVerse + '".' : "");
 
       const cut1 = [
         "Create a 16:9 cinematic wide-angle background scene of " + primaryBg + ", composed with balanced Golden Ratio spatial depth and authentic environmental texture across the entire frame. Shot on a 35mm lens with natural daylight, clean commercial stock photography aesthetic, no people, no text, no watermarks.",
@@ -846,8 +878,8 @@
       ];
 
       const topicArr = Array.from(new Set(kws.concat(["biblical", "ancient Middle East", "faith"])));
-      const title1 = "Close up of ancient Middle Eastern man in Golden Ratio composition depicting biblical moment";
-      const title2 = "Close up of weathered human hands in ancient Middle East depicting biblical narrative";
+      const title1 = "Close up of ancient Middle Eastern man " + primaryEmotion.slice(0, 60) + " in Golden Ratio composition";
+      const title2 = "Close up of " + primaryHand.slice(0, 70) + " in ancient Middle East";
 
       return { chips: chips, guideText: guideText, cut1: cut1, cut2: cut2, title1: title1, title2: title2, topicArr: topicArr };
     }
@@ -948,22 +980,28 @@
       throw new Error(firstError || "가용한 Gemini 모델을 찾지 못했습니다.");
     }
 
-    async function generateLiteralWithGemini(apiKey, ref, verse, extracted) {
+    async function generateLiteralWithGemini(apiKey, ref, verse, userScene, extracted) {
       const btn = document.getElementById('generateBtn');
       btn.disabled = true;
-      btn.textContent = "⏳ Gemini AI가 본문 서사 프롬프트 작성 중...";
+      btn.textContent = "⏳ Gemini AI가 프롬프트 작성 중...";
 
       const engRef = getEffectiveBibleRef();
       const refTitleRule = engRef ? ', MUST include "' + engRef + '"' : '';
+      const userSceneBlock = userScene
+        ? '\nHIGHEST PRIORITY — USER EXACT SCENE DIRECTION (100% MUST FOLLOW THIS ABOVE ALL ELSE):\n"' + userScene + '"\n'
+        : '';
+
       const prompt = 'You are a top visual storytelling artist and Adobe Stock prompt engineer.\n' +
-        'Analyze this EXACT Bible passage (' + (ref || engRef || 'Bible Passage') + ': "' + verse + '") and create ONE direct, literal narrative concept ("본문 충실 프롬프트") staying 100% FAITHFUL to the literal objects, actions, and emotions in the text (DO NOT pre-sanitize).\n' +
+        'Bible passage (' + (ref || engRef || 'Bible Passage') + '): "' + verse + '"\n' +
+        userSceneBlock +
+        'Create ONE direct, literal narrative concept staying 100% FAITHFUL to the user scene direction (if given) and the text (DO NOT pre-sanitize).\n' +
         'CRITICAL COMPOSITION RULE:\n' +
         '- NO copy space. Place the character and key subjects at the Golden Ratio (1:1.618 focal intersection) in a balanced 16:9 composition.\n' +
         'Produce:\n' +
         '1) "chips": 5 short Korean hashtag keywords describing the generated image elements.\n' +
         '2) "guideText": 1-2 Korean sentences explaining what image will be generated from these keywords.\n' +
-        '3) "cut1": [step1, step2, step3] for Cut 1 (character emotion + literal passage event placed at the Golden Ratio focal point in a 16:9 frame, 35mm lens, pin-sharp focus, skin pores, raw stone, coarse fabric, 8k). Step 2 MUST start with "Keep the exact..." and Step 3 with "Preserve the exact...".\n' +
-        '4) "cut2": [step1, step2, step3] for Cut 2 (weathered human hands + literal objects/action placed at the Golden Ratio focal point in a 16:9 frame, natural 5 fingers, 35mm lens, 8k). Step 2 MUST start with "Keep the exact..." and Step 3 with "Preserve the exact...".\n' +
+        '3) "cut1": [step1, step2, step3] for Cut 1 (character emotion + exact scene placed at the Golden Ratio focal point in a 16:9 frame, 35mm lens, pin-sharp focus, skin pores, raw stone, coarse fabric, 8k). Step 2 MUST start with "Keep the exact..." and Step 3 with "Preserve the exact...".\n' +
+        '4) "cut2": [step1, step2, step3] for Cut 2 (weathered human hands + exact objects/action placed at the Golden Ratio focal point in a 16:9 frame, natural 5 fingers, 35mm lens, 8k). Step 2 MUST start with "Keep the exact..." and Step 3 with "Preserve the exact...".\n' +
         '5) "title1", "title2": Adobe Stock English titles (under 200 chars, NO "copy space" words' + refTitleRule + ').\n' +
         '6) "keywords": array of 20 English topic keywords (NO "copy space").\n' +
         'Return STRICT JSON ONLY:\n' +
@@ -983,8 +1021,8 @@
       } catch (e) {
         const errBanner = document.getElementById('apiErrorBanner');
         errBanner.classList.remove('hidden');
-        errBanner.innerHTML = '<strong>⚠️ Gemini API 안내:</strong> ' + e.message + '<br/><span class="text-slate-300">→ 내장된 로컬 엔진으로 본문 그대로 작성했습니다.</span>';
-        const data = buildLiteralNarrativeLocally(ref, verse, extracted);
+        errBanner.innerHTML = '<strong>⚠️ Gemini API 안내:</strong> ' + e.message + '<br/><span class="text-slate-300">→ 내장된 로컬 엔진으로 요청하신 장면을 그대로 작성했습니다.</span>';
+        const data = buildLiteralNarrativeLocally(ref, verse, userScene, extracted);
         renderImageGuideBox(data.chips, data.guideText);
         applyGeneratedOutput(data.cut1, data.cut2, data.title1, data.title2, data.topicArr);
       } finally {
@@ -1100,6 +1138,7 @@
     function resetAll() {
       document.getElementById('verseRef').value = "";
       document.getElementById('verseText').value = "";
+      document.getElementById('userSceneDesc').value = "";
       updateDetectedRef();
       document.getElementById('imageGuideBox').classList.add('hidden');
       document.getElementById('apiErrorBanner').classList.add('hidden');
@@ -1112,19 +1151,27 @@
       const ref = document.getElementById('verseRef').value;
       const engRef = getEffectiveBibleRef();
       const verse = document.getElementById('verseText').value;
-      if (!verse && !ref) {
-        showToast("성경 출처 또는 본문을 먼저 입력하세요!");
+      const userScene = document.getElementById('userSceneDesc').value.trim();
+
+      if (!verse && !ref && !userScene) {
+        showToast("성경 본문이나 원하시는 장면 묘사를 먼저 입력하세요!");
         return;
       }
       const refDisplay = ref || engRef || 'Bible Passage';
       const titleInclude = engRef || 'Exodus 5';
-      const master = 'Act as a top image artist and Adobe Stock prompt engineer. Based strictly on this Bible passage (' + refDisplay + '):\n"' + verse + '"\n\n' +
-        'Create ONE literal, faithful biblical narrative concept ("본문 충실 프롬프트") — DO NOT pre-sanitize objects or actions mentioned in the text.\n' +
+      const sceneInstruction = userScene
+        ? 'USER REQUIRED SCENE DIRECTION (100% PRIORITY — MUST FOLLOW THIS EXACTLY): "' + userScene + '"\n\n'
+        : '';
+
+      const master = 'Act as a top image artist and Adobe Stock prompt engineer.\n' +
+        'Bible passage (' + refDisplay + '): "' + verse + '"\n\n' +
+        sceneInstruction +
+        'Create ONE literal, faithful biblical narrative concept ("본문 충실 프롬프트") — DO NOT pre-sanitize objects or actions.\n' +
         'NO copy space. Place the character and key subjects at the Golden Ratio (1:1.618) focal intersection within a balanced 16:9 frame.\n' +
         'First, briefly explain with 5 Korean keywords what image will be generated.\n' +
         'Then output Flow 3-step prompts (Step 1 Space & background, Step 2 Keep exact background... Place literal materials/event at Golden Ratio focal point, Step 3 Preserve exact composition... 8k details) for:\n' +
-        '- Cut 1 (person emotion + literal passage event)\n' +
-        '- Cut 2 (weathered human hands + literal objects/action)\n' +
+        '- Cut 1 (person emotion + exact requested scene)\n' +
+        '- Cut 2 (weathered human hands + exact requested objects/action)\n' +
         'Specs: 16:9, Golden Ratio composition, Ancient Middle Eastern realistic setting, 35mm lens, pin-sharp focus, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, natural 5 fingers, 8k commercial stock photo.\n' +
         'Also provide Adobe Stock English Title (under 200 chars, NO "copy space", include "' + titleInclude + '") and 25 English Keywords for each cut.';
       copyTextSafe(master, "Gemini/ChatGPT 웹 복사용 마스터 요청문이 복사되었습니다!");
