@@ -405,10 +405,10 @@
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
             <h2 class="text-base font-bold text-white">승인 검수 진단 리포트</h2>
-            <p class="text-xs text-slate-400">기술적 수치 자동 분석 + 육안 체크리스트 합산</p>
+            <p class="text-xs text-slate-400">이미지를 올리면 기술 수치와 AI 정책 검수를 자동으로 실행합니다</p>
           </div>
           <div class="text-right">
-            <div class="text-[11px] text-slate-400">예상 승인 적합도</div>
+            <div class="text-[11px] text-slate-400">예상 승인 확률 (추정)</div>
             <div id="finalScore" class="text-2xl font-extrabold text-slate-500">--%</div>
           </div>
         </div>
@@ -422,22 +422,22 @@
           </div>
         </div>
 
-        <div class="space-y-2.5">
+        <div class="space-y-2.5 hidden" id="policySectionHidden">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-bold uppercase tracking-wider text-sky-400">2. 해부학 &amp; 어도비 스톡 정책 검수</h3>
             <button type="button" id="aiAuditBtn" onclick="runGeminiVisionAudit()" class="hidden text-xs px-3 py-1 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold">
-              🤖 AI 자동 스캔 실행
+              🤖 AI 자동 스캔 (재실행)
             </button>
           </div>
           <div id="aiAuditResult" class="hidden p-3 rounded-xl bg-sky-950/40 border border-sky-500/30 text-xs text-sky-100 leading-relaxed whitespace-pre-wrap"></div>
 
           <div class="space-y-2 text-xs" id="manualChecklist">
             <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer hover:border-slate-700">
-              <input type="checkbox" class="audit-chk mt-0.5 accent-amber-500" data-weight="20" onchange="recalculateScore()" />
+              <input type="checkbox" class="audit-chk mt-0.5 accent-amber-500" data-weight="25" onchange="recalculateScore()" />
               <span><strong>워터마크 없음:</strong> 좌측 확대 창 확인 결과 우측 하단 별(✦)이나 로고·서명·깨진 글자가 전혀 없습니다.</span>
             </label>
             <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer hover:border-slate-700">
-              <input type="checkbox" class="audit-chk mt-0.5 accent-amber-500" data-weight="20" onchange="recalculateScore()" />
+              <input type="checkbox" class="audit-chk mt-0.5 accent-amber-500" data-weight="25" onchange="recalculateScore()" />
               <span><strong>해부학적 무결점:</strong> 손가락 개수가 정확히 5개이며, 눈동자 비대칭·피부 뭉개짐·기이한 관절 왜곡이 없습니다.</span>
             </label>
             <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer hover:border-slate-700">
@@ -445,7 +445,7 @@
               <span><strong>정책 안전성 (IP/폭력):</strong> 피·상처·폭력 묘사가 없고, 특정 유명 배우나 현대 브랜드·로고가 보이지 않습니다.</span>
             </label>
             <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer hover:border-slate-700">
-              <input type="checkbox" class="audit-chk mt-0.5 accent-amber-500" data-weight="10" onchange="recalculateScore()" />
+              <input type="checkbox" class="audit-chk mt-0.5 accent-amber-500" data-weight="0" onchange="recalculateScore()" />
               <span><strong>업로드 설정 확인:</strong> 스톡 업로드 시 [Generative AI] 체크 및 [Fictional people/places] 체크 준비가 되었습니다.</span>
             </label>
           </div>
@@ -589,6 +589,10 @@
 
     let originalPromptsBackup = { cut1: [], cut2: [], sample: [] };
     let currentTechScore = 0;
+    let currentTechFails = [];
+    let aiState = 'nokey';
+    let aiReportHtml = '';
+    let aiErrMsg = '';
     let hasUploadedImage = false;
     let currentImageBase64 = null;
     let sampleImageBase64 = null;
@@ -1451,7 +1455,18 @@
           hasUploadedImage = true;
           document.getElementById('previewContainer').classList.remove('hidden');
           document.getElementById('previewImg').src = evt.target.result;
+          aiState = localStorage.getItem('gemini_api_key') ? 'pending' : 'nokey';
+          aiReportHtml = '';
+          aiErrMsg = '';
+          document.querySelectorAll('.audit-chk').forEach(function(chk) {
+            chk.checked = false;
+            chk.closest('label').classList.remove('border-emerald-500/50', 'border-rose-500/60');
+          });
+          const aiBox = document.getElementById('aiAuditResult');
+          aiBox.classList.add('hidden');
+          aiBox.textContent = "";
           runLocalTechnicalAudit(img);
+          if (localStorage.getItem('gemini_api_key')) runGeminiVisionAudit();
         };
         img.src = evt.target.result;
       };
@@ -1505,6 +1520,11 @@
       const goodExposure = avgLum >= 45 && avgLum <= 215;
       const goodSharpness = avgEdge >= 10;
 
+      currentTechFails = [];
+      if (!is4MP) currentTechFails.push("해상도 4MP 미만");
+      if (!is169) currentTechFails.push("16:9 비율 불일치");
+      if (!goodExposure) currentTechFails.push("노출 부적정");
+      if (!goodSharpness) currentTechFails.push("선명도 부족");
       currentTechScore = (is4MP ? 15 : 4) + (is169 ? 5 : 0) + (goodExposure ? 8 : 3) + (goodSharpness ? 7 : 2);
 
       const checksHtml = [
@@ -1514,7 +1534,12 @@
         renderCheckRow("전반적 엣지 선명도", goodSharpness, "선명도 지수 " + avgEdge.toFixed(1), goodSharpness ? "디테일과 윤곽이 또렷함" : "흐릿함(Out of focus) 주의")
       ].join('');
 
-      document.getElementById('techChecks').innerHTML = checksHtml;
+      const techPct = Math.round(currentTechScore / 35 * 100);
+      const techColor = techPct >= 90 ? 'text-emerald-300' : (techPct >= 70 ? 'text-amber-300' : 'text-rose-400');
+      const summaryRow = '<div class="p-3 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-between gap-3">' +
+        '<div class="font-bold text-slate-200">📐 자동 기술 수치 종합</div>' +
+        '<span class="text-xs font-mono ' + techColor + ' font-bold">' + currentTechScore + ' / 35점 (' + techPct + '%)</span></div>';
+      document.getElementById('techChecks').innerHTML = summaryRow + checksHtml;
       recalculateScore();
     }
 
@@ -1530,23 +1555,54 @@
 
     function recalculateScore() {
       if (!hasUploadedImage) return;
-      let manualScore = 0;
-      document.querySelectorAll('.audit-chk').forEach(function(chk) {
-        if (chk.checked) manualScore += Number(chk.dataset.weight);
-      });
-      const total = Math.min(99, currentTechScore + manualScore);
       const scoreEl = document.getElementById('finalScore');
+      const box = document.getElementById('verdictBox');
+      const techPctNow = Math.round(currentTechScore / 35 * 100);
+      const techDetail = '<br/>📐 자동 기술 수치: ' + currentTechScore + '/35점 (100% 기준 ' + techPctNow + '%)' + (currentTechFails.length ? ' · ' + currentTechFails.join(', ') + ' 미달' : '') + (false ? '' : '');
+      const techDetailOld = currentTechFails.length ? '<br/>⚠️ 기술 수치 미달: ' + currentTechFails.join(', ') : '';
+      const note = '<br/><span class="text-slate-500">※ 어도비 스톡의 실제 심사 기준은 비공개이므로 참고용 추정치입니다.</span>';
+
+      if (aiState === 'pending') {
+        scoreEl.textContent = "분석 중";
+        scoreEl.className = "text-2xl font-extrabold text-sky-400";
+        box.innerHTML = '🤖 AI가 워터마크 · 해부학 · 정책(IP/폭력)을 스캔하고 있습니다. 잠시만 기다려 주세요...' + techDetail;
+        return;
+      }
+      if (aiState === 'nokey' || aiState === 'error') {
+        scoreEl.textContent = "--%";
+        scoreEl.className = "text-2xl font-extrabold text-slate-500";
+        box.innerHTML = (aiState === 'error'
+          ? '<span class="text-rose-400 font-bold">AI 스캔 실패:</span> ' + aiErrMsg + '<br/>이미지를 다시 올리거나 API 설정을 확인해 주세요.'
+          : '<span class="text-amber-300 font-bold">승인 확률 계산에는 Gemini API 키가 필요합니다.</span> 우측 상단 [⚙️ API 설정]에서 키를 저장한 뒤 이미지를 다시 올려 주세요. 키가 없으면 워터마크·손가락 같은 정책 검사를 자동으로 할 수 없습니다.') +
+          '<br/>현재 자동 기술 수치: ' + (currentTechFails.length ? '미달 → ' + currentTechFails.join(', ') : '4개 항목 모두 통과');
+        return;
+      }
+
+      const issueLabels = ['워터마크 발견', '해부학·아티팩트 문제', '정책(IP/폭력) 위험'];
+      let aiScore = 0;
+      const issues = [];
+      document.querySelectorAll('.audit-chk').forEach(function(chk, i) {
+        if (i > 2) return;
+        if (chk.checked) aiScore += Number(chk.dataset.weight);
+        else issues.push(issueLabels[i]);
+      });
+      const total = Math.min(99, currentTechScore + aiScore);
       scoreEl.textContent = total + "%";
+
+      let detail = techDetail;
+      if (issues.length) detail += '<br/>❌ AI 발견 문제: ' + issues.join(', ');
+      if (aiReportHtml) detail += '<br/>' + aiReportHtml;
+      const reminder = '<br/><span class="text-slate-400">📌 업로드 시 [Generative AI]와 [Fictional people/places] 체크를 잊지 마세요.</span>';
 
       if (total >= 90) {
         scoreEl.className = "text-2xl font-extrabold text-emerald-400";
-        document.getElementById('verdictBox').innerHTML = '<span class="text-emerald-300 font-bold">승인 준비 완료 (' + total + '%):</span> 기술적 기준과 스톡 정책 검수를 모두 통과했습니다. CSV 메타데이터와 함께 업로드하세요.';
+        box.innerHTML = '<span class="text-emerald-300 font-bold">승인 가능성 높음 (' + total + '%):</span> 기술 기준과 AI 정책 검수를 모두 통과했습니다.' + detail + reminder + note;
       } else if (total >= 70) {
         scoreEl.className = "text-2xl font-extrabold text-amber-400";
-        document.getElementById('verdictBox').innerHTML = '<span class="text-amber-300 font-bold">보완 후 업로드 권장 (' + total + '%):</span> 4MP 업스케일링 여부나 우측 하단 워터마크·체크리스트 미확인 항목을 점검해 주세요.';
+        box.innerHTML = '<span class="text-amber-300 font-bold">보완 후 업로드 권장 (' + total + '%):</span> 아래 문제를 해결하면 확률이 올라갑니다.' + detail + reminder + note;
       } else {
         scoreEl.className = "text-2xl font-extrabold text-rose-400";
-        document.getElementById('verdictBox').innerHTML = '<span class="text-rose-400 font-bold">반려 위험 높음 (' + total + '%):</span> 해상도(4MP) 부족 또는 워터마크/체크리스트 미통과 상태입니다.';
+        box.innerHTML = '<span class="text-rose-400 font-bold">반려 위험 높음 (' + total + '%):</span> 아래 문제를 해결한 뒤 다시 올려 확인하세요.' + detail + note;
       }
     }
 
@@ -1555,21 +1611,65 @@
       if (!apiKey || !currentImageBase64) return;
       const outBox = document.getElementById('aiAuditResult');
       outBox.classList.remove('hidden');
-      outBox.textContent = "🤖 이미지 압축 및 Gemini Vision 정밀 스캔 중...";
+      outBox.textContent = "🤖 이미지를 Gemini Vision으로 정밀 스캔 중... (워터마크·해부학·정책)";
+      aiState = 'pending';
+      recalculateScore();
 
       try {
-        const compressed = await compressImageForVision(currentImageBase64, 1024);
-        const text = await callGeminiWithFallback(apiKey, {
+        const compressed = await compressImageForVision(currentImageBase64, 1280);
+        const raw = await callGeminiWithFallback(apiKey, {
           contents: [{
             parts: [
-              { text: "You are a strict Adobe Stock moderator. Inspect this image for: 1) AI watermark (especially bottom-right star mark), 2) Hand/finger/eye anatomy errors, 3) Artifacts/blur, 4) Violence/IP issues, 5) Golden Ratio framing quality. Give a concise Korean report with Pass/Reject risk and exact fix needed." },
+              { text: "You are a strict Adobe Stock content moderator reviewing an AI-generated image. Inspect carefully and return STRICT JSON ONLY with keys: " +
+                '{"watermark_found":boolean (any AI sparkle/star mark especially bottom-right, logo, signature, garbled text),' +
+                '"anatomy_ok":boolean (hands have exactly 5 natural fingers, eyes symmetric, no warped joints or melted skin),' +
+                '"artifacts_or_blur":boolean (visible artifacts, distortions, out-of-focus main subject),' +
+                '"policy_issue":boolean (graphic violence, blood, nudity, recognizable real person, trademark/brand/IP),' +
+                '"copy_space_present":boolean,"golden_ratio_ok":boolean (main subject near golden-ratio intersection),' +
+                '"summary":"2-3 sentence Korean verdict on approval chances","fixes":["Korean actionable fix", "..."]}. Be strict and specific about what you see.' },
               { inlineData: { mimeType: compressed.mimeType, data: compressed.base64Data } }
             ]
-          }]
+          }],
+          generationConfig: { responseMimeType: "application/json" }
         });
-        outBox.textContent = text;
+        const r = JSON.parse(stripMarkdownCodeFences(raw));
+
+        const chks = document.querySelectorAll('.audit-chk');
+        const results = [!r.watermark_found, Boolean(r.anatomy_ok) && !r.artifacts_or_blur, !r.policy_issue];
+        results.forEach(function(ok, i) {
+          if (!chks[i]) return;
+          chks[i].checked = ok;
+          const lab = chks[i].closest('label');
+          lab.classList.remove('border-emerald-500/50', 'border-rose-500/60');
+          lab.classList.add(ok ? 'border-emerald-500/50' : 'border-rose-500/60');
+        });
+        aiState = 'done';
+        const esc = function(t) { return String(t || '').replace(/</g, '&lt;'); };
+        const parts = [];
+        if (r.copy_space_present) parts.push('⚠️ 카피스페이스가 감지됨(이 프로젝트 규칙과 다름)');
+        if (!r.golden_ratio_ok) parts.push('⚠️ 황금비율 구도 개선 여지');
+        if (r.summary) parts.push(esc(r.summary));
+        if (r.fixes && r.fixes.length) parts.push('필요한 조치: ' + r.fixes.map(esc).join(' / '));
+        aiReportHtml = parts.join('<br/>');
+
+        const lines = [
+          "🤖 AI 자동 판정 (체크리스트에 반영됨 · 직접 확인 후 수정 가능)",
+          (r.watermark_found ? "❌" : "✅") + " 워터마크: " + (r.watermark_found ? "발견됨 → 크롭/제거 필요" : "없음"),
+          ((r.anatomy_ok && !r.artifacts_or_blur) ? "✅" : "❌") + " 해부학·아티팩트: " + ((r.anatomy_ok && !r.artifacts_or_blur) ? "이상 없음" : "문제 의심"),
+          (r.policy_issue ? "❌" : "✅") + " 정책(IP/폭력): " + (r.policy_issue ? "위험 요소 있음" : "문제 없음"),
+          (r.copy_space_present ? "⚠️" : "✅") + " 카피스페이스: " + (r.copy_space_present ? "있음(이 프로젝트 규칙과 다름)" : "없음"),
+          (r.golden_ratio_ok ? "✅" : "⚠️") + " 황금비율 구도: " + (r.golden_ratio_ok ? "양호" : "개선 여지"),
+          "",
+          r.summary || ""
+        ];
+        if (r.fixes && r.fixes.length) lines.push("", "필요한 조치:", r.fixes.map(function(f) { return "• " + f; }).join("\n"));
+        outBox.textContent = lines.join("\n");
+        recalculateScore();
       } catch (e) {
-        outBox.textContent = "오류 발생: " + e.message;
+        aiState = 'error';
+        aiErrMsg = e.message;
+        outBox.textContent = "AI 스캔 오류: " + e.message;
+        recalculateScore();
       }
     }
 
