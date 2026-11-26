@@ -86,13 +86,16 @@
         </div>
 
         <div class="grid grid-cols-1 gap-2.5 pt-1">
-          <button onclick="recommendConcepts()" class="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/10">
+          <button id="recommendBtn" onclick="recommendConcepts()" class="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/10">
             💡 판매 베스트 콘셉트 3안 추천받기
           </button>
           <button onclick="copyMasterMetaPrompt()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition">
             📋 무료 Gemini/ChatGPT 웹용 마스터 요청문 복사
           </button>
         </div>
+
+        <!-- Status / Error Notice -->
+        <div id="apiErrorBanner" class="hidden p-3 rounded-xl bg-rose-950/50 border border-rose-500/40 text-xs text-rose-200 leading-relaxed"></div>
 
         <!-- Optional Fine-tuning Drawer -->
         <details id="fineTuneBox" class="hidden rounded-xl bg-slate-950/70 border border-slate-800 p-3.5">
@@ -347,8 +350,16 @@
         <input id="geminiApiKeyInput" type="password" placeholder="AIzaSy..."
           class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500" />
       </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">사용할 Gemini 모델</label>
+        <select id="geminiModelSelect" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+          <option value="gemini-2.5-flash">gemini-2.5-flash (권장 · 최신 무료 티어)</option>
+          <option value="gemini-2.0-flash">gemini-2.0-flash (안정형)</option>
+          <option value="gemini-2.5-pro">gemini-2.5-pro (고성능)</option>
+        </select>
+      </div>
       <div class="flex justify-end gap-2">
-        <button onclick="clearApiKey()" class="px-3 py-2 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300">키 삭제</button>
+        <button onclick="clearApiKey()" class="px-3 py-2 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300">키 삭제 (로컬 모드)</button>
         <button onclick="saveApiKey()" class="px-4 py-2 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950">저장하기</button>
       </div>
     </div>
@@ -360,7 +371,6 @@
   </div>
 
   <script>
-    // 성경 66권 한글 풀네임 · 약어 · 영문 매핑
     const BIBLE_BOOKS = [
       ["창세기", "Genesis"], ["출애굽기", "Exodus"], ["레위기", "Leviticus"], ["민수기", "Numbers"], ["신명기", "Deuteronomy"],
       ["여호수아", "Joshua"], ["사사기", "Judges"], ["룻기", "Ruth"], ["사무엘상", "1 Samuel"], ["사무엘하", "2 Samuel"],
@@ -392,151 +402,163 @@
       ["몬", "Philemon"], ["히", "Hebrews"], ["약", "James"], ["유", "Jude"], ["계", "Revelation"]
     ];
 
-    // 성경 모티브별 판매 최적화 전략 데이터베이스
-    const BIBLICAL_MOTIFS = [
+    // 확장된 성경 본문 테마 데이터베이스 (본문 1개 매칭 시에도 관련성 100% 3가지 변주 생성!)
+    const BIBLICAL_THEMES = [
+      {
+        id: "staff_miracle",
+        keywords: ["stick", "staff", "rod", "snake", "serpent", "tail", "throw", "ground", "caught", "hand", "지팡이", "막대기", "뱀", "꼬리", "던지", "잡으라"],
+        variants: [
+          {
+            badge: "추천 1 · 최고 판매 보편 감성형",
+            titleKr: "두려움을 이기는 담대한 순종",
+            descKr: "긴장 속에서 마음을 다잡고 결단하는 인물(Cut 1)과 땅 위 나무 지팡이를 향해 뻗은 확신의 손(Cut 2)",
+            salesPoint: "용기·순종·두려움 극복·리더십 주제의 설교 및 묵상·자기계발 콘텐츠에서 높은 판매 수요",
+            safety: "승인 안전도 최상 (96% · 위협적 뱀 대신 지팡이와 손 집중)",
+            bg: "a sun-baked ancient Middle Eastern rocky desert path with textured dry earth and distant sunlit sandstone ridges",
+            cut1: "a middle-aged ancient Middle Eastern man taking a deep breath with a courageous, focused, and determined gaze, weathered skin, natural beard, coarse unbleached linen tunic",
+            cut2: "a pair of weathered sun-tanned human hands reaching down decisively to firmly grasp a rough, natural wooden shepherd stick resting on dry dusty desert ground",
+            topic: "courage, obedience, wooden staff, calling, faith"
+          },
+          {
+            badge: "추천 2 · 설교 직관 서사형",
+            titleKr: "손에 쥔 소명의 나무 지팡이",
+            descKr: "소명을 깨닫고 경외감에 찬 눈빛(Cut 1)과 투박한 나무 지팡이를 두 손으로 꼭 쥔 클로즈업(Cut 2)",
+            salesPoint: "출애굽기 4장·모세의 소명·하나님의 능력을 다룬 설교 PPT에서 본문 전달력이 가장 직관적",
+            safety: "승인 안전도 최상 (97%)",
+            bg: "an open arid Middle Eastern desert hillside bathed in warm late-afternoon golden sunlight with raw boulders",
+            cut1: "an ancient Middle Eastern Jewish leader looking thoughtfully with awe and solemn conviction, sun-weathered olive skin, grey-streaked beard, coarse woven cloak",
+            cut2: "weathered calloused human hands gripping a rustic gnarled wooden staff upright against sunlit coarse linen fabric and desert stone",
+            topic: "calling, leadership, wooden rod, awe, biblical"
+          },
+          {
+            badge: "추천 3 · 고승인·디자이너 선호형",
+            titleKr: "거친 땅 위 믿음의 발걸음과 지팡이",
+            descKr: "겸손히 사명을 받아들이는 표정(Cut 1)과 거친 돌·모래 위 지팡이를 짚은 손 디테일(Cut 2)",
+            salesPoint: "깔끔한 사막 모래 여백(카피스페이스) 덕분에 설교 제목이나 성경 구절을 얹기 좋아 디자이너가 선호",
+            safety: "승인 안전도 최상 (98%)",
+            bg: "a clean sunlit ancient Middle Eastern sandy desert ground with weathered raw sandstone texture",
+            cut1: "a humble ancient Middle Eastern man looking gently forward with quiet resolve and trust, natural skin pores, coarse dusty desert robe",
+            cut2: "a weathered human hand steady upon a rough wooden staff resting on sunlit desert earth and raw stone",
+            topic: "trust, journey, desert, wooden stick, perseverance"
+          }
+        ]
+      },
       {
         id: "worship",
         keywords: ["worship", "bow", "heads down", "kneel", "reverence", "adore", "praise", "경배", "예배", "머리 숙여", "머리를 숙", "엎드려", "절하", "무릎", "찬양"],
-        titleKr: "고개 숙인 경배와 감사",
-        descKr: "따뜻한 빛 아래 경외감으로 머리 숙인 인물(Cut 1)과 가슴·무릎에 겸손히 모은 손(Cut 2)",
-        salesPoint: "교회 예배·묵상 앱·기독교 출판·감사/기도 콘텐츠 전반에서 연중 가장 수요가 높음",
-        safety: "승인 안전도 최상 (96%+)",
-        bg: "a quiet ancient Middle Eastern sandstone courtyard bathed in warm, reverent golden-hour sunlight",
-        cut1: "a middle-aged ancient Middle Eastern Jewish person with head gently bowed, eyes softly closed in deep reverence, humility, and heartfelt worship, weathered olive skin, coarse unbleached linen tunic",
-        cut2: "a pair of weathered ancient human hands resting humbly pressed together over coarse linen fabric in quiet prayer and reverence beside a raw stone step",
-        topic: "worship, reverence, humility, faith, prayer"
+        variants: [
+          {
+            badge: "추천 1 · 최고 판매 보편 감성형",
+            titleKr: "고개 숙인 경배와 감사",
+            descKr: "따뜻한 빛 아래 머리를 숙여 경배하는 인물(Cut 1)과 겸손히 모은 두 손(Cut 2)",
+            salesPoint: "예배·감사·기도·묵상 콘텐츠 전반에서 연중 가장 꾸준히 팔리는 스테디셀러 구도",
+            safety: "승인 안전도 최상 (97%)",
+            bg: "a quiet ancient Middle Eastern sandstone courtyard bathed in warm, reverent golden-hour sunlight",
+            cut1: "a middle-aged ancient Middle Eastern Jewish person with head gently bowed, eyes softly closed in deep reverence and heartfelt worship, weathered olive skin, coarse linen tunic",
+            cut2: "a pair of weathered ancient human hands resting humbly pressed together over coarse linen fabric in quiet worship beside a raw stone step",
+            topic: "worship, reverence, humility, faith, gratitude"
+          },
+          {
+            badge: "추천 2 · 설교 직관 서사형",
+            titleKr: "하나님의 임재 앞에서의 경외",
+            descKr: "감격과 경외감이 깃든 표정(Cut 1)과 무릎 위 거친 옷자락을 잡은 겸손한 손(Cut 2)",
+            salesPoint: "부흥회·예배 회복·하나님 만남 주제의 설교 PPT용으로 높은 활용도",
+            safety: "승인 안전도 최상 (96%)",
+            bg: "an ancient limestone sanctuary courtyard with warm sunbeams falling across rough stone walls",
+            cut1: "an earnest ancient Middle Eastern man looking slightly downward with quiet awe and deep spiritual emotion, dusty beard, coarse woven robe",
+            cut2: "weathered human hands resting gently on folded knees wrapped in coarse unbleached linen in humble devotion",
+            topic: "awe, devotion, presence, humility, ancient"
+          },
+          {
+            badge: "추천 3 · 고승인·디자이너 선호형",
+            titleKr: "고요한 빛 속의 두 손",
+            descKr: "평안하게 눈 감은 인물(Cut 1)과 사암 돌 위 정갈히 모은 손 클로즈업(Cut 2)",
+            salesPoint: "자극적 요소가 전혀 없고 여백이 넓어 주보 표지, 묵상 카드뉴스에 즉시 활용 가능",
+            safety: "승인 안전도 최상 (98%)",
+            bg: "a calm sunlit ancient stone wall and soft warm atmospheric light in the Middle East",
+            cut1: "a serene ancient Middle Eastern man with eyes gently closed in peaceful contemplation and gratitude, soft golden sunlight on weathered skin",
+            cut2: "weathered calloused human hands resting peacefully palm-up in open surrender on a sunlit raw sandstone surface",
+            topic: "surrender, peace, prayer, light, reflection"
+          }
+        ]
       },
       {
-        id: "signs",
-        keywords: ["sign", "miracle", "wonder", "believed", "believe", "staff", "rod", "moses", "aaron", "표적", "이적", "기적", "믿었", "믿음", "지팡이", "모세", "아론"],
-        titleKr: "믿음의 확신과 소명의 지팡이",
-        descKr: "감격과 확신에 찬 눈빛의 인물(Cut 1)과 나무 지팡이를 굳게 쥔 거친 손(Cut 2)",
-        salesPoint: "설교 PPT·리더십·소명·믿음 시리즈 자료 및 성경 교육 콘텐츠에서 꾸준한 구매 발생",
-        safety: "승인 안전도 상 (95%)",
-        bg: "an open sun-drenched ancient Middle Eastern stone gathering place with dusty sandstone walls and clear warm sky",
-        cut1: "an earnest ancient Middle Eastern Jewish man gazing forward with wide, awe-struck eyes filled with newfound belief, hope, and solemn conviction, weathered skin, coarse woven cloak over linen tunic",
-        cut2: "a pair of weathered sun-tanned ancient human hands gripping a rough, natural wooden shepherd staff firmly over dry earth and sunlit raw stone",
-        topic: "faith, belief, awe, wooden staff, conviction"
-      },
-      {
-        id: "brick",
-        keywords: ["brick", "straw", "clay", "mud", "taskmaster", "slave", "벽돌", "짚", "진흙", "감독", "노역", "종"],
-        titleKr: "짚 없는 진흙 벽돌과 고된 인내",
-        descKr: "지치고 간절하게 하늘을 보는 인물(Cut 1)과 짚 없이 갈라진 진흙 벽돌을 빚는 손(Cut 2)",
-        salesPoint: "출애굽기·인내·고난 극복 설교의 핵심 썸네일 및 역사 다큐멘터리 일러스트로 높은 가치",
-        safety: "승인 안전도 상 (폭력 배제 순화)",
-        bg: "an ancient Middle Eastern mudbrick workshop bathed in warm late-afternoon desert sunlight, weathered raw sandstone walls and dusty ground",
-        cut1: "a middle-aged ancient Middle Eastern Jewish man looking slightly upward with a deeply weary, sorrowful, and earnest expression, weathered olive skin, dusty dark beard, coarse unbleached linen tunic",
-        cut2: "a pair of weathered sun-tanned ancient human hands pressing wet dark brown mud into a rough wooden brick mold on a raw stone surface, beside sparse broken dry straw and a cracked unfired mudbrick",
-        topic: "mudbrick, straw, hardship, perseverance, labor"
-      },
-      {
-        id: "compassion",
-        keywords: ["hard life", "sorry", "mercy", "compassion", "cry", "sorrow", "tear", "suffer", "affliction", "고난", "고통", "불쌍", "긍휼", "눈물", "슬픔", "부르짖", "돌보"],
-        titleKr: "고통 속의 위로와 간절한 소망",
-        descKr: "애절하지만 소망을 품은 눈빛(Cut 1)과 서로를 위로하듯 얹은 거친 손·올리브 빛(Cut 2)",
-        salesPoint: "위로·치유·심방 설교 및 심리/힐링·묵상 카드뉴스 배경으로 디자인 구매자 선호도 높음",
-        safety: "승인 안전도 최상 (96%+)",
-        bg: "a weathered ancient Middle Eastern sandstone courtyard lit by soft, compassionate late-afternoon sunlight casting gentle warm shadows",
-        cut1: "an ancient Middle Eastern man with deeply expressive, glistening eyes filled with quiet endurance and hope for deliverance, weathered brow, coarse dusty linen tunic",
-        cut2: "a pair of weathered calloused human hands gently resting together over coarse unbleached linen fabric bathed in warm comforting sunlight",
-        topic: "compassion, hope, endurance, mercy, solace"
-      },
-      {
-        id: "prayer",
-        keywords: ["pray", "prayer", "supplication", "ask", "plead", "lord", "god", "기도", "간구", "여호와", "하나님"],
-        titleKr: "하늘을 향한 간절한 기도",
-        descKr: "새벽/석양 빛을 받으며 기도하는 인물(Cut 1)과 거친 돌 위에서 두 손 모은 기도 샷(Cut 2)",
-        salesPoint: "스톡 시장 기독교 카테고리 스테디셀러 1위 테마(기도·새벽예배·금식·묵상)",
-        safety: "승인 안전도 최상 (97%)",
-        bg: "a tranquil ancient Judean limestone courtyard bathed in warm morning sunbeams with an uncluttered sunlit stone wall",
-        cut1: "an ancient Middle Eastern Jewish person looking slightly skyward in sincere, silent prayer with peaceful determination, natural olive skin, coarse woven wool shawl",
-        cut2: "weathered human hands folded gently in earnest prayer over a rough chiseled raw stone ledge in warm morning light",
-        topic: "prayer, devotion, faith, hope, serenity"
+        id: "brick_hardship",
+        keywords: ["brick", "straw", "clay", "mud", "taskmaster", "slave", "hard life", "벽돌", "짚", "진흙", "감독", "노역", "종", "고역"],
+        variants: [
+          {
+            badge: "추천 1 · 최고 판매 보편 감성형",
+            titleKr: "고된 삶 속 하늘을 향한 소망",
+            descKr: "지친 모습으로 하늘을 올려다보는 인물(Cut 1)과 흙 묻은 거친 두 손(Cut 2)",
+            salesPoint: "인내·고난 극복·기도 응답·위로 설교 및 일반 역사 다큐멘터리 일러스트로 수요 높음",
+            safety: "승인 안전도 상 (95% · 폭력/학대 장면 완전 배제)",
+            bg: "an ancient Middle Eastern mudbrick workshop bathed in warm late-afternoon desert sunlight and weathered sandstone walls",
+            cut1: "a middle-aged ancient Middle Eastern Jewish man looking slightly upward with a deeply weary yet hopeful expression, weathered olive skin, dusty beard, coarse linen tunic",
+            cut2: "a pair of weathered sun-tanned ancient human hands pressing wet dark brown mud into a rough wooden brick mold beside sparse broken dry straw and a cracked mudbrick",
+            topic: "hardship, perseverance, mudbrick, straw, hope"
+          },
+          {
+            badge: "추천 2 · 설교 직관 서사형",
+            titleKr: "짚 없이 빚는 갈라진 진흙 벽돌",
+            descKr: "탄식하며 고뇌하는 노동자(Cut 1)와 마른 짚 몇 가닥과 갈라진 벽돌을 만지는 손(Cut 2)",
+            salesPoint: "출애굽기 5장 본문을 텍스트 설명 없이 이미지 한 장으로 즉각 이해시키는 직관적 구도",
+            safety: "승인 안전도 최상 (96%)",
+            bg: "a sunlit ancient dry clay brickyard ground with weathered raw stone workbench texture",
+            cut1: "an ancient Middle Eastern man wiping sweat from his dusty brow with sorrowful endurance, coarse frayed linen shirt",
+            cut2: "calloused dirt-stained human hands holding a crumbling cracked unfired clay mudbrick lacking straw over raw stone",
+            topic: "mudbrick, clay, labor, toil, endurance"
+          },
+          {
+            badge: "추천 3 · 고승인·디자이너 선호형",
+            titleKr: "흙투성이 손과 따뜻한 햇살",
+            descKr: "고난을 견디는 차분한 눈빛(Cut 1)과 흙이 묻은 손등 위로 비치는 황금빛(Cut 2)",
+            salesPoint: "노동·성실·인내·은혜의 빛을 상징해 교회 외 일반 인문/역사 출판에서도 잘 팔림",
+            safety: "승인 안전도 최상 (97%)",
+            bg: "an ancient sunlit sandstone courtyard wall with warm golden afternoon rim light and open dusty air",
+            cut1: "a quiet resilient ancient Middle Eastern worker gazing peacefully toward warm sunlight, natural skin pores, dust on coarse fabric",
+            cut2: "weathered human hands covered in dry clay dust resting gently on a sunlit raw stone ledge",
+            topic: "resilience, sunlight, hands, toil, hope"
+          }
+        ]
       },
       {
         id: "shepherd",
         keywords: ["shepherd", "sheep", "lamb", "flock", "pasture", "green", "양", "어린 양", "목자", "푸른 풀밭", "초장"],
-        titleKr: "선한 목자의 돌봄과 인도",
-        descKr: "들판을 살피는 온화한 목자(Cut 1)와 양털과 지팡이를 어루만지는 따뜻한 손(Cut 2)",
-        salesPoint: "위로·인도·시편 23편·교회 주보 표지 등에서 사계절 가장 안정적으로 판매됨",
-        safety: "승인 안전도 최상 (96%)",
-        bg: "rocky Judean hills with sparse sunlit pasture grass and warm morning light overlooking an open quiet valley",
-        cut1: "a calm, attentive ancient Middle Eastern shepherd looking thoughtfully over the hillside, weathered sun-tanned face, natural beard, traditional coarse striped wool cloak",
-        cut2: "rough weathered human hands gently cradling soft natural sheep wool beside a rustic wooden shepherd staff",
-        topic: "shepherd, care, guidance, sheep wool, pasture"
-      },
-      {
-        id: "bread",
-        keywords: ["bread", "loaf", "wine", "cup", "table", "eat", "feast", "manna", "떡", "빵", "포도주", "잔", "식탁", "만나"],
-        titleKr: "감사로 떼는 생명의 떡",
-        descKr: "감사하는 표정의 인물(Cut 1)과 햇살 아래 거친 보리빵을 떼는 두 손(Cut 2)",
-        salesPoint: "성찬식·추수감사·나눔·공동체 설교 및 일반 제과/역사/식문화 스톡으로도 이중 판매",
-        safety: "승인 안전도 최상 (97%)",
-        bg: "a humble ancient Middle Eastern stone home interior lit by warm natural doorway sunlight and raw stone walls",
-        cut1: "a serene ancient Middle Eastern man looking downward with deep gratitude and warmth, soft natural morning light across his face, simple coarse linen tunic",
-        cut2: "a pair of weathered human hands gently breaking a rustic baked coarse barley bread loaf on a raw weathered wooden and stone table",
-        topic: "breaking bread, gratitude, fellowship, barley loaf, hospitality"
-      },
-      {
-        id: "sea",
-        keywords: ["sea", "storm", "wind", "wave", "boat", "ship", "fish", "net", "water", "바다", "풍랑", "바람", "배", "물고기", "그물"],
-        titleKr: "거친 물결을 건너는 담대한 항해",
-        descKr: "수평선을 응시하는 어부의 결의(Cut 1)와 굵은 밧줄·그물을 단단히 쥔 손(Cut 2)",
-        salesPoint: "도전·인내·위기 극복·소명 주제의 설교와 자기계발·비즈니스 은유 이미지로도 판매됨",
-        safety: "승인 안전도 상 (95%)",
-        bg: "an ancient rocky shoreline by calm sunlit waters at dawn with weathered timber dock edges and open distant horizon",
-        cut1: "a weathered ancient Middle Eastern fisherman looking steadfastly toward the sunlit horizon with calm courage, wind-tousled hair, damp coarse linen tunic",
-        cut2: "rough, sun-darkened human hands holding a thick woven natural hemp rope and coarse fishing net on weathered timber",
-        topic: "fisherman, rope, courage, perseverance, shoreline"
-      },
-      {
-        id: "sower",
-        keywords: ["seed", "sow", "field", "soil", "harvest", "wheat", "grain", "vine", "fruit", "씨", "밭", "땅", "추수", "열매", "밀", "포도"],
-        titleKr: "소망을 담아 뿌리는 씨앗과 추수",
-        descKr: "들판을 바라보는 희망찬 농부(Cut 1)와 황금빛 밀 씨앗을 쥔 거친 두 손(Cut 2)",
-        salesPoint: "전도·성장·헌신·추수감사·유기농/농업 역사 콘텐츠까지 폭넓게 팔리는 황금 소재",
-        safety: "승인 안전도 최상 (97%)",
-        bg: "sunlit dry plowed earth and rocky soil in an ancient Middle Eastern terraced field under crisp morning daylight",
-        cut1: "a hopeful ancient Middle Eastern farmer gazing across the sunlit earth with quiet patience, sun-weathered skin, coarse linen tunic",
-        cut2: "calloused human hands cupped open holding golden wheat seeds above cracked dry fertile soil in warm sunlight",
-        topic: "seeds, harvest, patience, agriculture, hope"
-      },
-      {
-        id: "scroll",
-        keywords: ["scroll", "book", "law", "word", "write", "read", "lamp", "light", "flame", "두루마리", "말씀", "율법", "등불", "빛", "촛불"],
-        titleKr: "어둠을 밝히는 말씀의 두루마리와 등불",
-        descKr: "말씀을 깊이 묵상하는 표정(Cut 1)과 양피지 두루마리·토기 등잔을 만지는 손(Cut 2)",
-        salesPoint: "성경 통독·말씀 묵상(QT)·신학/교육 자료·책 표지 배경으로 연중 최상위 수요",
-        safety: "승인 안전도 최상 (97%)",
-        bg: "an ancient limestone study room illuminated by warm natural side light and soft ambient tones",
-        cut1: "a thoughtful ancient Middle Eastern scribe gazing attentively in quiet contemplation, natural olive complexion, grey-streaked beard, coarse linen robe",
-        cut2: "aged weathered human hands gently unrolling an old blank parchment scroll beside a handmade clay terracotta oil lamp",
-        topic: "ancient scroll, wisdom, light, study, scripture"
-      },
-      {
-        id: "wilderness",
-        keywords: ["desert", "wilderness", "mountain", "stone", "rock", "journey", "walk", "way", "road", "광야", "사막", "산", "바위", "돌", "길", "여정"],
-        titleKr: "광야의 여정과 흔들리지 않는 반석",
-        descKr: "먼 길을 내다보는 굳은 결의의 인물(Cut 1)과 거친 사암 반석을 짚은 손(Cut 2)",
-        salesPoint: "사순절·광야 영성·인생의 여정·결단 설교 PPT 및 여행/역사 스톡으로 높은 판매율",
-        safety: "승인 안전도 최상 (96%)",
-        bg: "an expansive rocky desert wilderness under clear golden afternoon sunlight with rugged raw sandstone formations",
-        cut1: "a resolute ancient Middle Eastern traveler looking ahead into the open sunlit distance with quiet determination, dusty skin, coarse desert cloak",
-        cut2: "weathered human hands resting steadily upon a rugged sun-baked sandstone rock along a dusty desert trail",
-        topic: "wilderness, journey, perseverance, desert, stone"
-      },
-      {
-        id: "peace",
-        keywords: ["heal", "touch", "sick", "blind", "peace", "forgive", "love", "save", "deliver", "sword", "war", "고치", "치유", "평안", "용서", "사랑", "구원", "전쟁", "칼"],
-        titleKr: "회복과 평화의 올리브 가지",
-        descKr: "안도와 평안이 깃든 따뜻한 미소(Cut 1)와 돌 위 올리브 가지에 닿은 온화한 손(Cut 2)",
-        salesPoint: "화해·용서·치유·평화·은혜 주제 및 폭력 묘사 없는 안전한 구원 상징으로 승인률 극상",
-        safety: "승인 안전도 최상 (97%)",
-        bg: "a peaceful ancient Middle Eastern courtyard with soft golden sunlight filtering over raw limestone walls and olive leaves",
-        cut1: "an ancient Middle Eastern person with a deeply relieved, peaceful, and grateful expression looking gently toward warm morning light",
-        cut2: "a pair of gentle, weathered human hands resting peacefully near a fresh olive branch on a sunlit raw stone surface",
-        topic: "peace, renewal, grace, olive branch, hope"
+        variants: [
+          {
+            badge: "추천 1 · 최고 판매 보편 감성형",
+            titleKr: "선한 목자의 따뜻한 돌봄",
+            descKr: "들판을 살피는 온화한 목자(Cut 1)와 부드러운 양털·목자 지팡이를 잡은 손(Cut 2)",
+            salesPoint: "시편 23편·위로·인도·주보 표지 등 기독교 스톡 시장 사계절 베스트셀러",
+            safety: "승인 안전도 최상 (97%)",
+            bg: "rocky Judean hills with sparse sunlit pasture grass under soft morning golden light",
+            cut1: "a calm, attentive ancient Middle Eastern shepherd looking thoughtfully over the hillside, weathered sun-tanned face, coarse striped wool cloak",
+            cut2: "rough weathered human hands gently cradling soft natural sheep wool beside a rustic wooden shepherd staff",
+            topic: "shepherd, care, guidance, wool, pasture"
+          },
+          {
+            badge: "추천 2 · 설교 직관 서사형",
+            titleKr: "푸른 초장과 쉴 만한 물가",
+            descKr: "평온한 목자의 미소(Cut 1)와 맑은 시냇가 곁 지팡이를 짚은 손(Cut 2)",
+            salesPoint: "안식·평강·회복 설교 PPT 및 힐링/명상 콘텐츠 배경으로 높은 클릭률",
+            safety: "승인 안전도 최상 (96%)",
+            bg: "sunlit grassy ancient Judean hills beside a calm shallow rocky stream in soft morning light",
+            cut1: "an ancient Middle Eastern shepherd smiling gently with quiet peace in warm morning light, natural beard, coarse linen cloak",
+            cut2: "a weathered human hand holding a carved wooden shepherd crook near sunlit pasture grass and raw stone",
+            topic: "peace, shepherd, rest, stream, pastoral"
+          },
+          {
+            badge: "추천 3 · 고승인·디자이너 선호형",
+            titleKr: "목자의 지팡이와 거친 직물",
+            descKr: "멀리 바라보는 목자의 옆모습(Cut 1)과 지팡이 나무결이 살아있는 손 클로즈업(Cut 2)",
+            salesPoint: "배경 여백이 넉넉해 설교 대지·찬양 가사 자막을 얹기에 최적화된 디자이너 선호 샷",
+            safety: "승인 안전도 최상 (98%)",
+            bg: "a warm golden sunlit ancient desert pasture with clean open sky and distant rocky hills",
+            cut1: "a steadfast ancient Middle Eastern shepherd in profile-three-quarter view gazing across the quiet hills",
+            cut2: "weathered human hands resting firmly on the worn wooden curve of a shepherd staff in crisp morning light",
+            topic: "guidance, leadership, staff, protection, morning"
+          }
+        ]
       }
     ];
 
@@ -626,6 +648,10 @@
         return;
       }
 
+      const errBanner = document.getElementById('apiErrorBanner');
+      errBanner.classList.add('hidden');
+      errBanner.textContent = "";
+
       selectedConceptIdx = null;
       document.getElementById('resultsWrapper').classList.add('hidden');
       document.getElementById('fineTuneBox').classList.add('hidden');
@@ -640,51 +666,118 @@
       }
     }
 
+    // 로컬 엔진: 본문 핵심 키워드에 100% 밀착된 3가지 변주 생성 (엉뚱한 카드 방지)
     function buildLocalTop3Concepts(ref, verse) {
       const combined = `${ref} ${verse}`.toLowerCase();
-      const scored = BIBLICAL_MOTIFS.map(motif => {
+      let bestTheme = null;
+      let bestScore = 0;
+
+      for (const theme of BIBLICAL_THEMES) {
         let score = 0;
-        for (const kw of motif.keywords) {
+        for (const kw of theme.keywords) {
           if (combined.includes(kw.toLowerCase())) {
             score += kw.length >= 4 ? 2 : 1;
           }
         }
-        return { motif, score };
-      }).sort((a, b) => b.score - a.score);
+        if (score > bestScore) {
+          bestScore = score;
+          bestTheme = theme;
+        }
+      }
 
-      const m1 = scored[0].score > 0 ? scored[0].motif : BIBLICAL_MOTIFS.find(m => m.id === "prayer");
-      const m2 = (scored[1] && scored[1].score > 0) ? scored[1].motif : BIBLICAL_MOTIFS.find(m => m.id === "scroll" && m.id !== m1.id) || BIBLICAL_MOTIFS[1];
-      const m3 = (scored[2] && scored[2].score > 0) ? scored[2].motif : BIBLICAL_MOTIFS.find(m => m.id === "peace" && m.id !== m1.id && m.id !== m2.id) || BIBLICAL_MOTIFS[3];
-
-      const strategies = [
-        { badge: "추천 1 · 최고 판매 보편 감성형", badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/30", m: m1 },
-        { badge: "추천 2 · 설교 직관 서사형", badgeColor: "bg-sky-500/20 text-sky-300 border-sky-500/30", m: m2 },
-        { badge: "추천 3 · 고승인·디자이너 선호형", badgeColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30", m: m3 }
+      const colors = [
+        "bg-amber-500/20 text-amber-300 border-amber-500/30",
+        "bg-sky-500/20 text-sky-300 border-sky-500/30",
+        "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
       ];
 
-      return strategies.map(s => ({
-        badge: s.badge,
-        badgeColor: s.badgeColor,
-        titleKr: s.m.titleKr,
-        descKr: s.m.descKr,
-        salesPoint: s.m.salesPoint,
-        safety: s.m.safety,
-        bg: s.m.bg,
-        cut1: s.m.cut1,
-        cut2: s.m.cut2,
-        topic: s.m.topic
-      }));
+      if (bestTheme) {
+        return bestTheme.variants.map((v, idx) => ({ ...v, badgeColor: colors[idx] }));
+      }
+
+      // 기본 매칭이 없을 때 범용 본문 맞춤형 3안 (기도/묵상/여정)
+      return [
+        {
+          badge: "추천 1 · 최고 판매 보편 감성형",
+          badgeColor: colors[0],
+          titleKr: "말씀을 향한 경건한 묵상과 믿음",
+          descKr: "깊은 생각과 진실함이 담긴 인물(Cut 1)과 거친 돌 위 경건히 모은 손(Cut 2)",
+          salesPoint: "설교·QT 묵상·기독교 출판물 전반에서 폭넓게 쓰이는 보편적 감성 스톡",
+          safety: "승인 안전도 최상 (97%)",
+          bg: "a quiet ancient Middle Eastern sandstone courtyard bathed in warm golden afternoon sunlight",
+          cut1: "an ancient Middle Eastern Jewish person gazing thoughtfully with deep sincerity and quiet faith, natural olive skin, coarse unbleached linen tunic",
+          cut2: "a pair of weathered ancient human hands resting humbly together over coarse linen fabric beside a sunlit raw stone ledge",
+          topic: "faith, reflection, devotion, prayer, biblical"
+        },
+        {
+          badge: "추천 2 · 설교 직관 서사형",
+          badgeColor: colors[1],
+          titleKr: "고대 두루마리와 소명의 빛",
+          descKr: "말씀을 깨닫고 결단하는 눈빛(Cut 1)과 양피지 두루마리를 펼친 거친 두 손(Cut 2)",
+          salesPoint: "성경 말씀 본문 자체를 강조하는 설교 PPT 및 성경공부 자료에 최적화",
+          safety: "승인 안전도 최상 (96%)",
+          bg: "an ancient limestone study niche illuminated by warm natural side sunlight",
+          cut1: "an earnest ancient Middle Eastern man looking up with solemn conviction and spiritual clarity, weathered skin, natural beard, coarse cloak",
+          cut2: "aged weathered human hands gently unrolling a blank ancient parchment scroll on a raw chiseled stone surface",
+          topic: "scripture, ancient scroll, wisdom, calling, light"
+        },
+        {
+          badge: "추천 3 · 고승인·디자이너 선호형",
+          badgeColor: colors[2],
+          titleKr: "여정 속 흔들리지 않는 반석",
+          descKr: "먼 곳을 바라보는 흔들림 없는 인물(Cut 1)과 단단한 사암 바위를 짚은 손(Cut 2)",
+          salesPoint: "여백(카피스페이스)이 깔끔하고 얼굴 왜곡 위험이 적어 디자이너 구매율이 높음",
+          safety: "승인 안전도 최상 (98%)",
+          bg: "an expansive rocky ancient Middle Eastern hillside under clear warm afternoon light",
+          cut1: "a calm, resolute ancient Middle Eastern traveler looking into the sunlit distance with quiet trust, dusty skin, coarse desert tunic",
+          cut2: "weathered human hands resting steadily upon a rugged sun-baked sandstone rock in crisp natural light",
+          topic: "steadfast, rock, journey, trust, desert"
+        }
+      ];
+    }
+
+    async function callGeminiWithFallback(apiKey, payload) {
+      const selectedModel = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
+      const modelsToTry = [...new Set([selectedModel, 'gemini-2.5-flash', 'gemini-2.0-flash'])];
+      let lastError = "알 수 없는 오류";
+
+      for (const model of modelsToTry) {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || data.error) {
+          lastError = data.error?.message || `HTTP ${res.status} 오류 (${model})`;
+          // API 키 자체가 잘못된 경우 재시도 무의미 -> 즉시 중단
+          if (res.status === 400 && lastError.toLowerCase().includes('api key')) {
+            throw new Error(lastError);
+          }
+          continue;
+        }
+
+        const candidate = data.candidates?.[0];
+        const text = candidate?.content?.parts?.[0]?.text;
+        if (text) return text;
+        lastError = `응답 텍스트가 비어 있음 (사유: ${candidate?.finishReason || 'UNKNOWN'})`;
+      }
+      throw new Error(lastError);
     }
 
     async function recommendConceptsWithGemini(apiKey, ref, verse) {
-      showToast("Gemini AI가 가장 잘 팔리는 3가지 콘셉트를 기획 중입니다...");
+      const btn = document.getElementById('recommendBtn');
+      btn.disabled = true;
+      btn.textContent = "⏳ Gemini AI가 본문 분석 중...";
+
       const prompt = `You are a top Adobe Stock creative director and biblical visual artist.
-Analyze this Bible passage (${ref}: ${verse}) and propose 3 DISTINCT image concepts optimized for HIGHEST Adobe Stock sales AND 95%+ approval.
-- Concept 1: Universal Emotion & Faith (highest broad commercial sales across sermons, books, meditation apps).
-- Concept 2: Direct Biblical Narrative (clear sermon illustration matching the passage's core action).
-- Concept 3: High-Approval Symbolic & Designer-Friendly (safe hands/objects/emotion with zero violence/artifacts).
-CRITICAL: Strictly NO blood, wounds, violence, crowds, text, logos, famous people. Ancient Middle Eastern / Jewish realistic setting.
-Return STRICT JSON ONLY (an array of 3 objects):
+Analyze this EXACT Bible passage (${ref || 'Bible Passage'}: "${verse}") and propose 3 DISTINCT image concepts closely tied to the specific objects, actions, and emotions in the passage, optimized for HIGHEST Adobe Stock sales AND 95%+ approval.
+- Concept 1: Universal Emotion & Faith (broad commercial sales based on the passage's emotional core).
+- Concept 2: Direct Biblical Narrative (clear sermon illustration showing the specific objects/actions in the passage, e.g., staff/stick, water, bread, etc.).
+- Concept 3: High-Approval Symbolic & Designer-Friendly (safe hands/objects with clean copy space).
+CRITICAL SAFETY: Strictly NO blood, wounds, violence, scary snakes/monsters, crowds, text, logos, famous people. If the passage mentions scary/violent elements (like a snake or hitting), focus safely on the human emotion, hand gesture, or wooden stick instead. Ancient Middle Eastern / Jewish realistic setting.
+Return STRICT JSON ONLY (an array of 3 objects, no markdown):
 [
   {
     "badge": "추천 1 · 최고 판매 보편 감성형",
@@ -698,18 +791,19 @@ Return STRICT JSON ONLY (an array of 3 objects):
     "topic": "3-5 safe English topic words comma separated"
   }
 ]`;
+
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json" }
-          })
+        const rawText = await callGeminiWithFallback(apiKey, {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json" }
         });
-        const data = await res.json();
-        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        const parsed = JSON.parse(raw);
+
+        const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          throw new Error("AI 응답 배열 형식이 올바르지 않습니다.");
+        }
+
         const colors = [
           "bg-amber-500/20 text-amber-300 border-amber-500/30",
           "bg-sky-500/20 text-sky-300 border-sky-500/30",
@@ -720,11 +814,17 @@ Return STRICT JSON ONLY (an array of 3 objects):
           badgeColor: colors[idx] || colors[0]
         }));
         renderConceptCards();
-        showToast("AI 콘셉트 3안 추천 완료! 1가지를 선택하세요.");
+        showToast("Gemini AI 본문 분석 완료! 1가지를 선택하세요.");
       } catch (e) {
-        alert("AI 호출 오류로 로컬 추천 엔진으로 전환합니다: " + e.message);
+        const errBanner = document.getElementById('apiErrorBanner');
+        errBanner.classList.remove('hidden');
+        errBanner.innerHTML = `<strong>⚠️ Gemini API 안내:</strong> ${e.message}<br/><span class="text-slate-300">→ 우선 내장된 로컬 분석 엔진으로 본문에 맞는 콘셉트를 추천했습니다. API 키를 사용하지 않으려면 우측 상단 [⚙️ API 설정] → [키 삭제]를 누르세요.</span>`;
+
         recommendedConcepts = buildLocalTop3Concepts(ref, verse);
         renderConceptCards();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "💡 판매 베스트 콘셉트 3안 추천받기";
       }
     }
 
@@ -788,7 +888,6 @@ Return STRICT JSON ONLY (an array of 3 objects):
       }
     }
 
-    // 2단계: 선택된 콘셉트로 Cut 1 & Cut 2 생성
     function generateFromSelectedConcept() {
       if (selectedConceptIdx === null) return;
       const chosen = recommendedConcepts[selectedConceptIdx];
@@ -880,6 +979,7 @@ Return STRICT JSON ONLY (an array of 3 objects):
       updateDetectedRef();
       recommendedConcepts = [];
       selectedConceptIdx = null;
+      document.getElementById('apiErrorBanner').classList.add('hidden');
       document.getElementById('conceptSection').classList.add('hidden');
       document.getElementById('fineTuneBox').classList.add('hidden');
       document.getElementById('resultsWrapper').classList.add('hidden');
@@ -1063,20 +1163,15 @@ Rules for final generation:
       const mimeType = currentImageBase64.split(';')[0].split(':')[1];
 
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: "You are a strict Adobe Stock moderator. Inspect this image for: 1) AI watermark (especially bottom-right star mark), 2) Hand/finger/eye anatomy errors, 3) Artifacts/blur, 4) Violence/IP issues, 5) Copy space quality. Give a concise Korean report with Pass/Reject risk and exact fix needed." },
-                { inlineData: { mimeType, data: base64Data } }
-              ]
-            }]
-          })
+        const text = await callGeminiWithFallback(apiKey, {
+          contents: [{
+            parts: [
+              { text: "You are a strict Adobe Stock moderator. Inspect this image for: 1) AI watermark (especially bottom-right star mark), 2) Hand/finger/eye anatomy errors, 3) Artifacts/blur, 4) Violence/IP issues, 5) Copy space quality. Give a concise Korean report with Pass/Reject risk and exact fix needed." },
+              { inlineData: { mimeType, data: base64Data } }
+            ]
+          }]
         });
-        const data = await res.json();
-        outBox.textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || "응답을 해석하지 못했습니다.";
+        outBox.textContent = text;
       } catch (e) {
         outBox.textContent = "오류 발생: " + e.message;
       }
@@ -1087,14 +1182,18 @@ Rules for final generation:
       const m = document.getElementById('apiModal');
       m.classList.toggle('hidden');
       document.getElementById('geminiApiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
+      document.getElementById('geminiModelSelect').value = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
     }
 
     function saveApiKey() {
       const val = document.getElementById('geminiApiKeyInput').value.trim();
+      const model = document.getElementById('geminiModelSelect').value;
+      localStorage.setItem('gemini_model', model);
       if (val) {
         localStorage.setItem('gemini_api_key', val);
-        showToast("Gemini API 키가 안전하게 브라우저에 저장되었습니다.");
+        showToast("Gemini API 키와 모델 설정이 저장되었습니다.");
       }
+      document.getElementById('apiErrorBanner').classList.add('hidden');
       updateApiBadge();
       toggleApiModal();
     }
@@ -1102,6 +1201,7 @@ Rules for final generation:
     function clearApiKey() {
       localStorage.removeItem('gemini_api_key');
       document.getElementById('geminiApiKeyInput').value = '';
+      document.getElementById('apiErrorBanner').classList.add('hidden');
       updateApiBadge();
       toggleApiModal();
       showToast("API 키가 삭제되어 무료 로컬 분석 모드로 전환되었습니다.");
