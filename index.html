@@ -938,4 +938,333 @@ Produce:
 2) "guideText": 1-2 Korean sentences explaining what image will be generated from these keywords.
 3) "cut1": [step1, step2, step3] for Cut 1 (character emotion + literal passage event placed at the Golden Ratio focal point in a 16:9 frame, 35mm lens, pin-sharp focus, skin pores, raw stone, coarse fabric, 8k). Step 2 MUST start with "Keep the exact..." and Step 3 with "Preserve the exact...".
 4) "cut2": [step1, step2, step3] for Cut 2 (weathered human hands + literal objects/action placed at the Golden Ratio focal point in a 16:9 frame, natural 5 fingers, 35mm lens, 8k). Step 2 MUST start with "Keep the exact..." and Step 3 with "Preserve the exact...".
-5)
+5) "title1", "title2": Adobe Stock English titles (under 200 chars, NO "copy space" words${engRef ? `, MUST include "${engRef}"` : ''}).
+6) "keywords": array of 20 English topic keywords (NO "copy space").
+Return STRICT JSON ONLY:
+{
+  "chips": ["#키워드1", "#키워드2", "#키워드3", "#키워드4", "#키워드5"],
+  "guideText": "이 구절을 바탕으로 ... 이미지가 생성됩니다.",
+  "cut1": ["step1", "step2", "step3"],
+  "cut2": ["step1", "step2", "step3"],
+  "title1": "...",
+  "title2": "...",
+  "keywords": ["kw1", "kw2"]
+}`;
+
+      try {
+        const rawText = await callGeminiWithFallback(apiKey, {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json" }
+        });
+        const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+
+        renderImageGuideBox(parsed.chips || [], parsed.guideText || "");
+        applyGeneratedOutput(parsed.cut1, parsed.cut2, parsed.title1, parsed.title2, parsed.keywords || []);
+        showToast("Gemini AI 16:9 황금비율 프롬프트 작성 완료!");
+      } catch (e) {
+        const errBanner = document.getElementById('apiErrorBanner');
+        errBanner.classList.remove('hidden');
+        errBanner.innerHTML = `<strong>⚠️ Gemini API 안내:</strong> ${e.message}<br/><span class="text-slate-300">→ 내장된 로컬 엔진으로 본문 그대로 작성했습니다.</span>`;
+        const data = buildLiteralNarrativeLocally(ref, verse, extracted);
+        renderImageGuideBox(data.chips, data.guideText);
+        applyGeneratedOutput(data.cut1, data.cut2, data.title1, data.title2, data.topicArr);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "✨ 본문 충실 프롬프트 생성";
+      }
+    }
+
+    function applyGeneratedOutput(cut1Steps, cut2Steps, rawTitle1, rawTitle2, topicArr) {
+      const engRef = parseEnglishBibleRef(document.getElementById('verseRef').value);
+      document.getElementById('cut1FixNotice').classList.add('hidden');
+      document.getElementById('cut2FixNotice').classList.add('hidden');
+
+      originalPromptsBackup.cut1 = [...cut1Steps];
+      originalPromptsBackup.cut2 = [...cut2Steps];
+
+      renderEditableSteps('cut1Steps', cut1Steps, 'c1');
+      renderEditableSteps('cut2Steps', cut2Steps, 'c2');
+
+      document.getElementById('cut1Title').value = formatAdobeTitle(rawTitle1, engRef);
+      document.getElementById('cut2Title').value = formatAdobeTitle(rawTitle2, engRef);
+
+      const refBookKw = engRef ? engRef.split(' ')[0] : null;
+      const baseKw1 = [
+        ...(refBookKw ? [engRef, refBookKw] : []),
+        ...topicArr, "ancient", "Middle Eastern", "biblical", "portrait", "close up", "golden ratio", "coarse linen", "sandstone", "natural sunlight", "weathered", "faith", "storytelling", "historical", "35mm", "photorealistic", "commercial stock", "emotion", "dramatic light"
+      ];
+      const baseKw2 = [
+        ...(refBookKw ? [engRef, refBookKw] : []),
+        ...topicArr, "human hands", "close up", "ancient", "Middle East", "biblical", "raw stone", "craftsmanship", "coarse fabric", "golden ratio", "sunlight", "weathered hands", "texture", "historical", "natural light", "35mm", "photorealistic", "rustic", "authentic", "earth tones"
+      ];
+
+      document.getElementById('cut1Keywords').value = [...new Set(baseKw1)].slice(0, 25).join(', ');
+      document.getElementById('cut2Keywords').value = [...new Set(baseKw2)].slice(0, 25).join(', ');
+
+      document.getElementById('emptyResultState').classList.add('hidden');
+      document.getElementById('resultsWrapper').classList.remove('hidden');
+      document.getElementById('resultsWrapper').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderEditableSteps(containerId, stepTexts, prefix) {
+      const labels = [
+        "Step 1 - Create the space and background",
+        "Step 2 - Place key materials",
+        "Step 3 - Expressing details and adding special effects"
+      ];
+      const container = document.getElementById(containerId);
+      container.innerHTML = stepTexts.map((txt, idx) => {
+        const elId = `${prefix}_step_${idx}`;
+        return `
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold text-slate-300">${labels[idx]}</span>
+              <button onclick="copyValById('${elId}')" class="text-[11px] px-2.5 py-0.5 rounded bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 font-semibold transition">복사</button>
+            </div>
+            <textarea id="${elId}" rows="3" class="w-full bg-slate-900/60 border border-slate-800/80 rounded-lg p-2 text-xs text-slate-200 mono leading-relaxed focus:outline-none focus:border-amber-500 resize-y">${txt}</textarea>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function fixFlowError(cutKey, mode) {
+      const prefix = cutKey === 'cut1' ? 'c1' : (cutKey === 'cut2' ? 'c2' : 'sp');
+      const noticeEl = document.getElementById(`${cutKey}FixNotice`);
+      const appliedReasons = [];
+
+      for (let i = 0; i < 3; i++) {
+        const ta = document.getElementById(`${prefix}_step_${i}`);
+        if (!ta) continue;
+        let text = ta.value;
+
+        if (mode === 'safety') {
+          for (const rule of FLOW_SAFETY_REPLACEMENTS) {
+            if (rule.regex.test(text)) {
+              text = text.replace(rule.regex, rule.safe);
+              appliedReasons.push(rule.reason);
+            }
+          }
+          text = text.replace(/completely free of artifacts or distortion\.?/gi, "clean natural camera photography.");
+          text = text.replace(/completely free of artifacts\.?/gi, "clean natural camera photography.");
+        } else if (mode === 'simplify') {
+          if (i === 0) {
+            text = text.replace(/, no people, no text, no (watermarks|logos)\./gi, ", clean empty natural scene.");
+          } else if (i === 1) {
+            text = text
+              .replace(/Ensure facial anatomy, eyes, nose, and posture are completely realistic and undistorted\./gi, "Natural relaxed realistic posture.")
+              .replace(/Ensure human hands show anatomically clear, natural five-finger structure with realistic knuckles and fingernails\./gi, "Natural relaxed five-finger hand posture.")
+              .replace(/Keep the exact (.*?) from the previous image\./gi, "Keeping the previous background and lighting,");
+          } else if (i === 2) {
+            text = "Keeping the exact Golden Ratio composition and subject from the previous image, enhance fine natural lighting, raw stone and coarse linen texture, realistic skin detail, and crisp 35mm photography sharpness.";
+          }
+          appliedReasons.push("Step 2·3 연속 편집 충돌 방지를 위해 지시문을 간결하게 단순화함");
+        }
+        ta.value = text;
+      }
+
+      const uniqueReasons = [...new Set(appliedReasons)];
+      noticeEl.classList.remove('hidden');
+      if (uniqueReasons.length > 0) {
+        noticeEl.innerHTML = `<strong>✅ 사후 순화 완료:</strong> ${uniqueReasons.join(' / ')}`;
+      } else {
+        noticeEl.innerHTML = `<strong>ℹ️ 안내:</strong> 추가 민감어가 없었습니다. 여전히 에러가 뜨면 <strong>[⚡ 지시 단순화]</strong>를 누르거나 Step 2 문장을 직접 고쳐보세요.`;
+      }
+      showToast("Flow 에러 대응 순화 수정이 적용되었습니다!");
+    }
+
+    function restoreOriginal(cutKey) {
+      const prefix = cutKey === 'cut1' ? 'c1' : (cutKey === 'cut2' ? 'c2' : 'sp');
+      const backup = originalPromptsBackup[cutKey];
+      if (!backup || backup.length === 0) return;
+      for (let i = 0; i < 3; i++) {
+        const ta = document.getElementById(`${prefix}_step_${i}`);
+        if (ta) ta.value = backup[i];
+      }
+      document.getElementById(`${cutKey}FixNotice`).classList.add('hidden');
+      showToast("원래 프롬프트로 복구되었습니다.");
+    }
+
+    function resetAll() {
+      document.getElementById('verseRef').value = "";
+      document.getElementById('verseText').value = "";
+      updateDetectedRef();
+      document.getElementById('imageGuideBox').classList.add('hidden');
+      document.getElementById('apiErrorBanner').classList.add('hidden');
+      document.getElementById('resultsWrapper').classList.add('hidden');
+      document.getElementById('emptyResultState').classList.remove('hidden');
+      showToast("모든 입력과 결과가 초기화되었습니다.");
+    }
+
+    function copyMasterMetaPrompt() {
+      const ref = document.getElementById('verseRef').value;
+      const engRef = parseEnglishBibleRef(ref);
+      const verse = document.getElementById('verseText').value;
+      if (!verse && !ref) {
+        showToast("성경 출처 또는 본문을 먼저 입력하세요!");
+        return;
+      }
+      const master = `Act as a top image artist and Adobe Stock prompt engineer. Based strictly on this Bible passage (${ref}${engRef ? ` / ${engRef}` : ''}):
+"${verse}"
+
+Create ONE literal, faithful biblical narrative concept ("본문 충실 프롬프트") — DO NOT pre-sanitize objects or actions mentioned in the text.
+NO copy space. Place the character and key subjects at the Golden Ratio (1:1.618) focal intersection within a balanced 16:9 frame.
+First, briefly explain with 5 Korean keywords what image will be generated.
+Then output Flow 3-step prompts (Step 1 Space & background, Step 2 Keep exact background... Place literal materials/event at Golden Ratio focal point, Step 3 Preserve exact composition... 8k details) for:
+- Cut 1 (person emotion + literal passage event)
+- Cut 2 (weathered human hands + literal objects/action)
+Specs: 16:9, Golden Ratio composition, Ancient Middle Eastern realistic setting, 35mm lens, pin-sharp focus, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, natural 5 fingers, 8k commercial stock photo.
+Also provide Adobe Stock English Title (under 200 chars, NO "copy space", include "${engRef || 'Exodus 4'}") and 25 English Keywords for each cut.`;
+      navigator.clipboard.writeText(master);
+      showToast("Gemini/ChatGPT 웹 복사용 마스터 요청문이 복사되었습니다!");
+    }
+
+    /* TAB 2: REVERSE PROMPTING */
+    function handleSampleUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        sampleImageBase64 = evt.target.result;
+        const img = new Image();
+        img.onload = function() {
+          document.getElementById('samplePreviewBox').classList.remove('hidden');
+          document.getElementById('samplePreviewImg').src = evt.target.result;
+          analyzeSampleColorAndRatio(img);
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function analyzeSampleColorAndRatio(img) {
+      const c = document.createElement('canvas');
+      c.width = 100;
+      c.height = 100;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0, 100, 100);
+      const data = ctx.getImageData(0, 0, 100, 100).data;
+
+      let rSum = 0, gSum = 0, bSum = 0, lumSum = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        rSum += data[i]; gSum += data[i + 1]; bSum += data[i + 2];
+        lumSum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      }
+      const n = data.length / 4;
+      const rAvg = rSum / n, bAvg = bSum / n, lumAvg = lumSum / n;
+      const isWarm = rAvg - bAvg > 18;
+      const isBright = lumAvg > 135;
+
+      sampleVisualTone = isWarm
+        ? (isBright ? "warm golden-hour natural sunlight and sunlit ochre tones" : "warm amber dramatic side lighting and deep earth shadows")
+        : (isBright ? "crisp natural daylight and neutral stone tones" : "soft moody low-key directional natural light");
+
+      const ratio = (img.naturalWidth / img.naturalHeight).toFixed(2);
+      document.getElementById('sampleAutoVisualInfo').innerHTML = `
+        <div><strong>해상도:</strong> ${img.naturalWidth} × ${img.naturalHeight} (비율 ${ratio})</div>
+        <div><strong>감지된 조명·색감:</strong> ${isWarm ? '따뜻한 황금/사막 톤' : '차분한 중립/자연 톤'} · ${isBright ? '밝고 선명한 노출' : '깊이감 있는 명암'}</div>
+      `;
+    }
+
+    async function generatePromptFromSample() {
+      const apiKey = localStorage.getItem('gemini_api_key');
+      const bgInput = document.getElementById('sampleBgDesc').value.trim();
+      const subjInput = document.getElementById('sampleSubjectDesc').value.trim();
+
+      if (!sampleImageBase64 && !bgInput && !subjInput) {
+        showToast("먼저 샘플 이미지를 올리거나 장면 요소를 입력해 주세요!");
+        return;
+      }
+
+      document.getElementById('sampleApiBanner').classList.add('hidden');
+
+      if (apiKey && sampleImageBase64) {
+        await generateSampleWithGeminiVision(apiKey);
+      } else {
+        buildSamplePromptLocally(bgInput, subjInput);
+      }
+    }
+
+    function buildSamplePromptLocally(bgInput, subjInput) {
+      const refVal = document.getElementById('sampleBibleRef').value.trim();
+      const engRef = parseEnglishBibleRef(refVal);
+
+      const bgDesc = bgInput || "the exact authentic environmental setting and spatial atmosphere of the reference sample";
+      const subjDesc = subjInput || "the exact human character, hand posture, clothing texture, and key objects seen in the reference sample";
+
+      const steps = [
+        `Create a 16:9 photorealistic background scene replicating ${bgDesc}, bathed in ${sampleVisualTone}, arranged with balanced Golden Ratio spatial depth. Shot on a 35mm lens, commercial stock photography aesthetic, no people, no text, no watermarks.`,
+        `Keep the exact background, lighting direction, and 16:9 Golden Ratio framing from the previous image. Place key materials at the Golden Ratio focal intersection: ${subjDesc}. Ensure human face and hands are anatomically clear with natural five fingers and undistorted posture.`,
+        `Preserve the exact composition, Golden Ratio subject placement, and anatomy from the previous step. Refine to ultra-detailed 8k resolution photorealistic commercial stock photo shot on a 35mm lens, pin-sharp focus from foreground to background, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, natural lighting highlights, no artifacts.`
+      ];
+
+      renderSampleOutput(steps, `Photorealistic scene recreating ${subjDesc.slice(0, 60)} in 16:9 Golden Ratio composition`, ["photorealistic", "35mm", "golden ratio", "commercial stock", "8k", "ancient", "natural light", "raw stone texture", "coarse fabric", "close up", "biblical", "authentic", "skin pores", "historical", "storytelling"], engRef);
+      showToast("Reverse Prompting 3단계가 작성되었습니다!");
+    }
+
+    async function generateSampleWithGeminiVision(apiKey) {
+      const btn = document.getElementById('sampleGenerateBtn');
+      btn.disabled = true;
+      btn.textContent = "⏳ 이미지 압축 및 Gemini Vision 분석 중 (최대 15초)...";
+
+      const refVal = document.getElementById('sampleBibleRef').value.trim();
+      const engRef = parseEnglishBibleRef(refVal);
+
+      const prompt = `Please write the prompt to create the attached image as is, strictly following this 3-step structure optimized for Google Flow (Nano Banana 2.1 and Pro):
+- Step 1: Create the space and background (16:9, exact lighting, atmosphere, Golden Ratio depth, no people, no text).
+- Step 2: Place key materials (MUST start with "Keep the exact..." and place the exact person/hands/clothing/objects from the attached image at the Golden Ratio focal point, perfect human hand, natural 5 fingers, anatomically clear face and hands).
+- Step 3: Expressing details and adding special effects (MUST start with "Preserve the exact...", pin-sharp focus from foreground to background, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, 8k resolution, shot on 35mm lens, commercial stock photo, no artifact, 95% Adobe Stock approval quality).
+Also output an Adobe Stock English Title (under 200 chars${engRef ? `, MUST include "${engRef}"` : ''}) and 25 relevant English Keywords.
+Return STRICT JSON ONLY:
+{
+  "step1": "...",
+  "step2": "...",
+  "step3": "...",
+  "title": "...",
+  "keywords": ["kw1", "kw2"]
+}`;
+
+      try {
+        const compressed = await compressImageForVision(sampleImageBase64, 1024);
+        const rawText = await callGeminiWithFallback(apiKey, {
+          contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: compressed.mimeType, data: compressed.base64Data } }] }],
+          generationConfig: { responseMimeType: "application/json" }
+        });
+        const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        if (!parsed.step1 || !parsed.step2 || !parsed.step3) {
+          throw new Error("AI 응답에서 3단계 프롬프트가 누락되었습니다.");
+        }
+        renderSampleOutput([parsed.step1, parsed.step2, parsed.step3], parsed.title || "Photorealistic biblical stock photo", parsed.keywords || [], engRef);
+        showToast("Gemini Vision Reverse Prompting 완료!");
+      } catch (e) {
+        const banner = document.getElementById('sampleApiBanner');
+        banner.classList.remove('hidden');
+        banner.innerHTML = `<strong>⚠️ Gemini API 안내:</strong> ${e.message}<br/><span class="text-slate-300">→ 아래 로컬 기반 3단계 프롬프트가 생성되었습니다. 더 정밀한 AI 역산을 원하시면 [📋 샘플 이미지와 함께 웹에 붙일 요청문 복사]를 이용해 주세요!</span>`;
+        buildSamplePromptLocally(document.getElementById('sampleBgDesc').value.trim(), document.getElementById('sampleSubjectDesc').value.trim());
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "✨ Reverse Prompting 실행";
+      }
+    }
+
+    function renderSampleOutput(steps, rawTitle, kwArr, engRef) {
+      originalPromptsBackup.sample = [...steps];
+      document.getElementById('sampleFixNotice').classList.add('hidden');
+      renderEditableSteps('sampleSteps', steps, 'sp');
+      document.getElementById('sampleTitle').value = formatAdobeTitle(rawTitle, engRef);
+      const refBookKw = engRef ? engRef.split(' ')[0] : null;
+      const mergedKw = [...(refBookKw ? [engRef, refBookKw] : []), ...kwArr, "photorealistic", "35mm", "commercial stock", "golden ratio"];
+      document.getElementById('sampleKeywords').value = [...new Set(mergedKw)].slice(0, 25).join(', ');
+      document.getElementById('sampleEmptyState').classList.add('hidden');
+      document.getElementById('sampleResultWrapper').classList.remove('hidden');
+    }
+
+    function copySampleWebPrompt() {
+      const refVal = document.getElementById('sampleBibleRef').value.trim();
+      const engRef = parseEnglishBibleRef(refVal);
+      const promptText = `Please write the prompt to create the attached image as is.
+Step 1 - Create the space and background (16:9 ratio, Golden Ratio spatial depth, lighting, environment, no people)
+Step 2 - Place key materials (Keep the exact background from Step 1. Position the character/hands/objects using Golden Ratio in 16:9, perfect human hand, natural five fingers, anatomically clear face and hands)
+Step 3 - Expressing details and adding special effects (Preserve the exact composition from Step 2. Pin-sharp focus from foreground to background, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, no artifact, 8k resolution, shot on 35mm lens, commercial stock photo)
+Please fill out the prompts according to the Nano Banana 2.1 and Pro optimization principles. 
