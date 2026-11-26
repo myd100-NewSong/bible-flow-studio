@@ -774,7 +774,7 @@
         }
         if (hits > 0) matched.push(Object.assign({}, el, { hits: hits, fromUser: fromUser }));
       }
-      matched.sort(function(a, b) { return b.hits - a.hits; });
+      matched.sort(function(a, b) { if (a.fromUser !== b.fromUser) return a.fromUser ? -1 : 1; return b.hits - a.hits; });
       return matched;
     }
 
@@ -845,6 +845,7 @@
 
       const engScene = extractCleanEnglishSnippet(userScene);
       const engVerse = extractCleanEnglishSnippet(verse);
+      const isCrowd = /백성|사람들|노동자|일꾼|무리|군중|이스라엘|people|workers|crowd|laborers|israelites/i.test(userScene || "");
 
       const chips = (userScene ? ["#사용자 장면 최우선"] : [])
         .concat(extracted.slice(0, 4).map(function(e) { return e.chip; }))
@@ -853,28 +854,47 @@
       const cleanLabels = extracted.slice(0, 4).map(function(e) { return e.chip.replace('#', ''); }).join(', ');
       let guideText = "";
       if (userScene) {
-        guideText = '요청하신 장면 <strong>"' + userScene + '"</strong>을(를) 100% 최우선으로 반영하여, <strong>[' + (cleanLabels || '고대 중동 실사') + ']</strong> 중심의 <strong>인물·사건(Cut 1)</strong>과 <strong>손·사물(Cut 2)</strong> 이미지가 16:9 황금비율로 생성됩니다.';
+        guideText = '요청하신 장면 <strong>"' + userScene + '"</strong>을(를) 100% 최우선으로 반영하여, <strong>[' + (cleanLabels || '고대 중동 실사') + ']</strong> 중심의 <strong>' + (isCrowd ? '다수 인물(Cut 1)' : '인물·사건(Cut 1)') + '</strong>과 <strong>손·사물(Cut 2)</strong> 이미지가 16:9 황금비율로 생성됩니다.';
       } else if (extracted.length > 0) {
         guideText = "이 구절의 텍스트 그대로 <strong>[" + cleanLabels + "]</strong> 키워드와 입력된 본문 문맥이 16:9 황금비율 구도 안에 그대로 반영된 <strong>인물·사건(Cut 1)</strong>과 <strong>손·행동(Cut 2)</strong> 이미지가 생성됩니다.";
       } else {
         guideText = '입력하신 본문 텍스트 문맥 자체를 Flow에 직접 전달하여 <strong>[16:9 황금비율, 고대 중동 실사, 본문 그대로의 인물 표정과 손동작]</strong> 이미지가 생성됩니다.';
       }
 
-      const narrativeClause = engScene
-        ? ' Strictly depict this required scene: "' + engScene + '".'
-        : (engVerse ? ' Strictly depict this exact biblical narrative scene: "' + engVerse + '".' : "");
+      // 영문이면 그대로, 한글이면 원문을 따옴표로 직접 전달 (예전에는 한글이 통째로 버려졌음)
+      const sceneText = engScene || (userScene ? userScene.replace(/\s+/g, ' ').slice(0, 220) : "");
+      const sceneIsKorean = Boolean(userScene) && !engScene;
+      const verseText = engVerse || (verse ? verse.replace(/\s+/g, ' ').slice(0, 220) : "");
+      const verseIsKorean = Boolean(verse) && !engVerse;
+
+      let narrativeClause = "";
+      let envHint = "";
+      let preserveHint = "";
+      if (userScene) {
+        narrativeClause = ' MANDATORY SCENE (highest priority, depict exactly' + (sceneIsKorean ? ', original Korean description, interpret literally' : '') + '): "' + sceneText + '".';
+        envHint = ' The environment must visibly suit this scene: "' + sceneText + '".';
+        preserveHint = ' Keep the required scene fully intact: "' + sceneText + '".';
+      } else if (verse) {
+        narrativeClause = ' Strictly depict this exact biblical narrative scene' + (verseIsKorean ? ' (original Korean text, interpret literally)' : '') + ': "' + verseText + '".';
+        envHint = ' The environment must suit this biblical passage: "' + verseText + '".';
+        preserveHint = ' Keep the narrative scene of the passage fully intact.';
+      }
+
+      const subject1 = isCrowd
+        ? "a medium-wide shot of three to five ancient Middle Eastern laborers working together, with the main figure at the focal point"
+        : "a close-up shot of an ancient Middle Eastern man";
 
       const cut1 = [
-        "Create a 16:9 cinematic wide-angle background scene of " + primaryBg + ", composed with balanced Golden Ratio spatial depth and authentic environmental texture across the entire frame. Shot on a 35mm lens with natural daylight, clean commercial stock photography aesthetic, no people, no text, no watermarks.",
-        "Keep the exact background, sunlight direction, and 16:9 framing from the previous image. Position the main character at the Golden Ratio focal intersection (1:1.618 visual anchor) of the 16:9 frame: a close-up shot of an ancient Middle Eastern man " + primaryEmotion + ", " + objClause + "." + narrativeClause + " Ensure facial anatomy, eyes, nose, and posture are completely realistic and undistorted.",
-        "Preserve the exact Golden Ratio character placement, composition, and facial anatomy from the previous step. Enhance to ultra-detailed 8k photorealistic commercial stock photo quality shot on a 35mm lens. Render pin-sharp focus from foreground to background with realistic skin pores, authentic coarse fabric grain, ultra-detailed raw stone texture, natural golden sunlight rim lighting, and subtle floating dust motes, completely free of artifacts."
+        "Create a 16:9 cinematic wide-angle background scene of " + primaryBg + ", composed with balanced Golden Ratio spatial depth and authentic environmental texture across the entire frame." + envHint + " Shot on a 35mm lens with natural daylight, clean commercial stock photography aesthetic, no people, no text, no watermarks.",
+        "Keep the exact background, sunlight direction, and 16:9 framing from the previous image. Position the main character at the Golden Ratio focal intersection (1:1.618 visual anchor) of the 16:9 frame: " + subject1 + " " + primaryEmotion + ", " + objClause + "." + narrativeClause + " Ensure facial anatomy, eyes, nose, and posture are completely realistic and undistorted.",
+        "Preserve the exact Golden Ratio character placement, composition, and facial anatomy from the previous step." + preserveHint + " Enhance to ultra-detailed 8k photorealistic commercial stock photo quality shot on a 35mm lens. Render pin-sharp focus from foreground to background with realistic skin pores, authentic coarse fabric grain, ultra-detailed raw stone texture, natural golden sunlight rim lighting, and subtle floating dust motes, completely free of artifacts."
       ];
 
       const cut2ObjText = objs.length > 0 ? " with " + objs[0].obj : "";
       const cut2 = [
-        "Create a 16:9 realistic close-range background scene matching " + primaryBg + ", framed with balanced Golden Ratio diagonal depth across weathered raw stone and natural ancient linen tones under crisp directional daylight. Shot on a 35mm lens, commercial stock photo style, no people, no text, no logos.",
+        "Create a 16:9 realistic close-range background scene matching " + primaryBg + ", framed with balanced Golden Ratio diagonal depth across weathered raw stone and natural ancient linen tones under crisp directional daylight." + envHint + " Shot on a 35mm lens, commercial stock photo style, no people, no text, no logos.",
         "Keep the exact background tone, sunlight direction, and 16:9 framing from the previous image. Place the focal subject at the Golden Ratio intersection of the 16:9 frame: a close-up of " + primaryHand + cut2ObjText + "." + narrativeClause + " Ensure human hands show anatomically clear, natural five-finger structure with realistic knuckles and fingernails.",
-        "Preserve the exact Golden Ratio composition, hand anatomy, five natural fingers, and narrative details from the previous step. Elevate to ultra-detailed 8k photorealistic commercial stock photography shot on a 35mm lens with pin-sharp focus from foreground to background. Emphasize realistic skin pores, weathered knuckles, ultra-detailed raw stone texture, authentic coarse fabric grain, natural directional sunlight highlights, and zero artifacts."
+        "Preserve the exact Golden Ratio composition, hand anatomy, five natural fingers, and narrative details from the previous step." + preserveHint + " Elevate to ultra-detailed 8k photorealistic commercial stock photography shot on a 35mm lens with pin-sharp focus from foreground to background. Emphasize realistic skin pores, weathered knuckles, ultra-detailed raw stone texture, authentic coarse fabric grain, natural directional sunlight highlights, and zero artifacts."
       ];
 
       const topicArr = Array.from(new Set(kws.concat(["biblical", "ancient Middle East", "faith"])));
@@ -995,6 +1015,7 @@
         'Bible passage (' + (ref || engRef || 'Bible Passage') + '): "' + verse + '"\n' +
         userSceneBlock +
         'Create ONE direct, literal narrative concept staying 100% FAITHFUL to the user scene direction (if given) and the text (DO NOT pre-sanitize).\n' +
+        'SCENE FIDELITY RULE: Translate the user scene (and key verse content) into precise English and embed it concretely in Step 1 (environment/props that fit the scene), Step 2 (who is doing what, how many people, key objects) and Step 3 (preserve it). If the scene involves several people (e.g. a crowd of laborers), depict a small group instead of defaulting to a single man; Cut 2 hands must perform the exact action of the scene. Never drop or generalize the user scene.\n' +
         'CRITICAL COMPOSITION RULE:\n' +
         '- NO copy space. Place the character and key subjects at the Golden Ratio (1:1.618 focal intersection) in a balanced 16:9 composition.\n' +
         'Produce:\n' +
@@ -1168,6 +1189,7 @@
         sceneInstruction +
         'Create ONE literal, faithful biblical narrative concept ("본문 충실 프롬프트") — DO NOT pre-sanitize objects or actions.\n' +
         'NO copy space. Place the character and key subjects at the Golden Ratio (1:1.618) focal intersection within a balanced 16:9 frame.\n' +
+        'SCENE FIDELITY: translate the required scene into precise English and embed it concretely in ALL 3 steps of both cuts; if several people are involved, show a small group; never drop or generalize it.\n' +
         'First, briefly explain with 5 Korean keywords what image will be generated.\n' +
         'Then output Flow 3-step prompts (Step 1 Space & background, Step 2 Keep exact background... Place literal materials/event at Golden Ratio focal point, Step 3 Preserve exact composition... 8k details) for:\n' +
         '- Cut 1 (person emotion + exact requested scene)\n' +
