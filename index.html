@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bible Flow Studio — 설교 & 어도비 스톡 3단계 프롬프트·검수기</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold">
+          ✦
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white">Bible Flow Studio</h1>
+          <p class="text-xs text-slate-400">Nano Banana 2.1/Pro · Flow 3단계 생성 · Adobe Stock 95% 승인 검수</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span id="apiStatusBadge" class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+          무료 로컬 모드 작동중
+        </span>
+        <button onclick="toggleApiModal()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">
+          ⚙️ API 설정 (선택)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="max-w-7xl mx-auto px-4 pt-5">
+    <div class="inline-flex rounded-xl bg-slate-900 p-1 border border-slate-800">
+      <button id="tabBtn1" onclick="switchTab(1)" class="px-5 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-slate-950 transition">
+        1. Flow 3단계 프롬프트 &amp; 스톡 메타데이터
+      </button>
+      <button id="tabBtn2" onclick="switchTab(2)" class="px-5 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition">
+        2. 어도비 스톡 95% 승인 검수기
+      </button>
+    </div>
+  </div>
+
+  <!-- TAB 1: PROMPT GENERATOR -->
+  <main id="tab1" class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Left Input Panel -->
+      <section class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
+        <div>
+          <h2 class="text-base font-bold text-amber-400 mb-1">말씀 입력 &amp; 장면 설계</h2>
+          <p class="text-xs text-slate-400">성경 본문을 넣고 테마를 고르면 어도비 스톡 안전 필터가 적용된 Cut 1·2 프롬프트가 생성됩니다.</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">성경 장절 (참고용)</label>
+          <input id="verseRef" type="text" value="출애굽기 5장 (Exodus 5)" placeholder="예: 시편 23편 1~2절"
+            class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">성경 본문 (한글 또는 영문)</label>
+          <textarea id="verseText" rows="4" placeholder="여기에 성경 구절을 붙여넣으세요..."
+            class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">After this, Moses and Aaron went to visit Pharaoh... Do not give the people any more straw with which to make bricks. But they must still make the same number of bricks as before.</textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">장면 프리셋 (API 없이 바로 생성 시 적용)</label>
+          <select id="presetSelect" onchange="applyPresetFields()"
+            class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2 text-sm text-amber-300 focus:outline-none focus:border-amber-500">
+            <option value="exodus5">출애굽기 5장 — 짚 없는 진흙 벽돌 &amp; 탄식하는 중동인</option>
+            <option value="prayer">간절한 기도 — 사암 성소 앞 기도하는 유대인과 두 손</option>
+            <option value="shepherd">선한 목자 (시편 23) — 양 떼를 돌보는 목자와 지팡이/양털</option>
+            <option value="bread">생명의 떡 (성찬/오병이어) — 햇살 아래 거친 보리빵을 떼는 손</option>
+            <option value="scroll">말씀과 등불 (시편 119) — 올리브 등잔 옆 고대 양피지 두루마리</option>
+            <option value="sower">씨 뿌리는 자 (마 13) — 거친 땅에 씨앗을 쥔 농부의 손과 눈빛</option>
+            <option value="custom">직접 입력 (아래 세부 장면 커스터마이징)</option>
+          </select>
+        </div>
+
+        <!-- Customizable Scene Fields -->
+        <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
+          <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+            <span>세부 장면 요소 (영문, 수정 가능)</span>
+            <span class="text-[11px] text-emerald-400">폭력/유혈 자동 배제</span>
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">공통 배경 공간 (Step 1)</label>
+            <input id="customBg" type="text" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Cut 1 인물 감정 묘사 (Step 2)</label>
+            <input id="customCut1" type="text" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Cut 2 손과 핵심 사물 묘사 (Step 2)</label>
+            <input id="customCut2" type="text" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">핵심 주제 영문 키워드 (3~5개)</label>
+            <input id="customTopic" type="text" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-2.5 pt-1">
+          <button onclick="generatePrompts()" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/10">
+            ✨ Flow 3단계 프롬프트 &amp; 스톡 태그 생성
+          </button>
+          <button onclick="copyMasterMetaPrompt()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition">
+            📋 무료 Gemini/ChatGPT 웹용 마스터 요청문 복사 (API 없을 때)
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Output Panel -->
+      <section class="lg:col-span-7 space-y-5">
+        
+        <!-- Cut Selector & CSV -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-4">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-bold text-white">생성 결과</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">16:9 · 35mm · Copy Space · 스톡 안전 모드</span>
+          </div>
+          <button onclick="downloadCSV()" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">
+            ⬇ 어도비 스톡 CSV 다운로드
+          </button>
+        </div>
+
+        <!-- CUT 1 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Cut 1 · 인물 감정 클로즈업</span>
+              <h3 class="text-sm font-semibold text-white mt-0.5">고대 중동/유대인 인물 표정 + 자연 카피스페이스</h3>
+            </div>
+            <span class="text-[11px] px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">Flow 순차 입력용</span>
+          </div>
+
+          <div class="space-y-3" id="cut1Steps"></div>
+
+          <!-- Cut 1 Metadata -->
+          <div class="pt-2 border-t border-slate-800 space-y-2.5">
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 제목 (Title)</span>
+                <button onclick="copyById('cut1Title')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
+              </div>
+              <p id="cut1Title" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 mono"></p>
+            </div>
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 키워드 (25개)</span>
+                <button onclick="copyById('cut1Keywords')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
+              </div>
+              <p id="cut1Keywords" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-300 mono leading-relaxed"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CUT 2 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Cut 2 · 손과 행동 디테일 클로즈업</span>
+              <h3 class="text-sm font-semibold text-white mt-0.5">얼굴 왜곡 리스크 0% · 고승인률 스톡 구도</h3>
+            </div>
+            <span class="text-[11px] px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/20">Flow 순차 입력용</span>
+          </div>
+
+          <div class="space-y-3" id="cut2Steps"></div>
+
+          <!-- Cut 2 Metadata -->
+          <div class="pt-2 border-t border-slate-800 space-y-2.5">
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 제목 (Title)</span>
+                <button onclick="copyById('cut2Title')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
+              </div>
+              <p id="cut2Title" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 mono"></p>
+            </div>
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 키워드 (25개)</span>
+                <button onclick="copyById('cut2Keywords')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
+              </div>
+              <p id="cut2Keywords" class="text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-300 mono leading-relaxed"></p>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <!-- TAB 2: ADOBE STOCK 95% AUDITOR -->
+  <main id="tab2" class="hidden max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Upload & Visual Preview -->
+      <section class="lg:col-span-6 space-y-4">
+        <div id="dropZone" onclick="document.getElementById('imageInput').click()"
+          class="border-2 border-dashed border-slate-700 hover:border-amber-500 bg-slate-900 rounded-2xl p-8 text-center cursor-pointer transition">
+          <input id="imageInput" type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)" />
+          <div class="text-3xl mb-2">🖼️</div>
+          <p class="text-sm font-bold text-white">Flow에서 생성한 이미지를 클릭하거나 드래그하세요</p>
+          <p class="text-xs text-slate-400 mt-1">서버로 전송되지 않으며 브라우저 안에서 100% 무료로 즉시 정밀 검사합니다</p>
+        </div>
+
+        <div id="previewContainer" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-300">업로드된 이미지 미리보기</span>
+            <span id="imgDimBadge" class="text-xs font-mono text-amber-400"></span>
+          </div>
+          <img id="previewImg" class="w-full rounded-xl border border-slate-800 object-contain max-h-80 bg-black" alt="Preview" />
+
+          <!-- Corner Watermark Loupe -->
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-rose-400">🔍 우측 하단 AI 워터마크 400% 확대 감시창</span>
+              <span class="text-[11px] text-slate-400">흰색 별(✦) 마크 유무를 눈으로 확인하세요</span>
+            </div>
+            <div class="flex items-center gap-4">
+              <canvas id="cornerCanvas" width="140" height="140" class="rounded-lg border border-rose-500/40 bg-black shrink-0"></canvas>
+              <div class="text-xs text-slate-300 space-y-1.5 leading-relaxed">
+                <p>Google Flow / Gemini 생성 이미지는 종종 <strong>우측 하단 구석에 작은 4각 별(✦) 워터마크</strong>가 남습니다.</p>
+                <p class="text-rose-300">별 마크가 보이면 어도비 스톡에서 <strong>100% 반려</strong>되므로 반드시 크롭하거나 지우개 툴로 제거 후 업로드하세요.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Audit Report -->
+      <section class="lg:col-span-6 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-base font-bold text-white">어도비 스톡 승인 적합성 진단 리포트</h2>
+            <p class="text-xs text-slate-400">기술적 수치 자동 분석 + 육안 체크리스트 합산</p>
+          </div>
+          <div class="text-right">
+            <div class="text-[11px] text-slate-400">예상 승인 적합도</div>
+            <div id="finalScore" class="text-2xl font-extrabold text-slate-500">--%</div>
+          </div>
+        </div>
+
+        <!-- Auto Technical Metrics -->
+        <div class="space-y-2.5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">1. 자동 기술 수치 검사 (브라우저 무료 분석)</h3>
+          <div id="techChecks" class="space-y-2 text-xs">
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">
+              이미지를 업로드하면 4MP 해상도, 16:9 비율, 노출 적정성, 선명도(초점)가 자동 계산됩니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Manual / AI Checklist -->
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-sky-400">2. 해부학 &amp; 어도비 스톡 정책 검수</h3>
+            <button id="aiAuditBtn" onclick="runGeminiVisionAudit()" class="hidden text-xs px-3 py-1 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold">
+              🤖 AI 자동 스캔 실행
+            </button>
+          </div>
+          <div id="aiAuditResult" class="hidden p-3 rounded-xl bg-sky-950/40 border border-sky-500/30 text-xs text-sky-100 leading-relaxed whitespace-pre-wrap"></div>
+
+          <div class="space-y-2 text-xs" id="manualChecklist">
+            <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer hover:border-slate-700">
+              <input type="checkbox" class="audit-chk mt-0.5 accent-amber-500" data-weight="20" onchange="recalculateScore()" />
+              <span><strong>워터마크 없음:</strong> 좌측 확대 창 확인 결과 우측 하단 별(✦)이나 로고·서명·깨진 글자가 전혀 없습니다.</span>
+            </label>
+            <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer hover:border-slate-700">
+              <input type="checkbox" class="audit-chk mt-0.5 accent-amber-500" data-weight="20" onchange="recalculateScore()" />
+              <span><strong>해부학적 무결점:</strong> 손가락 개수가 정확히 5개이며, 눈동자 비대칭·피부 뭉개짐·기이한 관절 왜곡이 없습니다.</span>
+            </label>
+            <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer hover:border-slate-700">
+              <input type="checkbox" class="audit-chk mt-0.5 accent-amber-500" data-weight="15" onchange="recalculateScore()" />
+              <span><strong>정책 안전성 (IP/폭력):</strong> 피·상처·폭력 묘사가 없고, 특정 유명 배우나 현대 브랜드·로고가 보이지 않습니다.</span>
+            </label>
+            <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer hover:border-slate-700">
+              <input type="checkbox" class="audit-chk mt-0.5 accent-amber-500" data-weight="10" onchange="recalculateScore()" />
+              <span><strong>업로드 설정 확인:</strong> 스톡 업로드 시 [Generative AI] 체크 및 [Fictional people/places] 체크 준비가 되었습니다.</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="verdictBox" class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300">
+          이미지를 업로드하고 체크리스트를 확인하시면 최종 승인 가이드를 안내해 드립니다.
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- API Settings Modal -->
+  <div id="apiModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">Google Gemini 무료 API 키 설정 (선택)</h3>
+        <button onclick="toggleApiModal()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        API 키를 입력하지 않아도 모든 기본 기능(프리셋 프롬프트, 스톡 태그, 4MP/노출/워터마크 검수)은 100% 작동합니다.
+        추후 <strong>어떤 성경 구절이든 AI가 자동 작성 + 이미지 AI 정밀 스캔</strong>을 원하실 때만 Google AI Studio 무료 API 키를 입력하세요.
+        키는 회원님의 브라우저(<code class="text-amber-300">localStorage</code>)에만 저장되며 외부 서버로 유출되지 않습니다.
+      </p>
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Gemini API Key</label>
+        <input id="geminiApiKeyInput" type="password" placeholder="AIzaSy..."
+          class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500" />
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="clearApiKey()" class="px-3 py-2 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300">키 삭제</button>
+        <button onclick="saveApiKey()" class="px-4 py-2 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950">저장하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed bottom-5 right-5 bg-emerald-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl shadow-xl z-50">
+    복사되었습니다!
+  </div>
+
+  <script>
+    const PRESETS = {
+      exodus5: {
+        bg: "an ancient Middle Eastern mudbrick workshop bathed in warm late-afternoon desert sunlight, weathered raw sandstone walls and dusty ground",
+        cut1: "a middle-aged ancient Middle Eastern Jewish man looking slightly upward with a deeply weary, sorrowful, and earnest expression, weathered olive skin, dusty dark beard, coarse unbleached linen tunic",
+        cut2: "a pair of weathered sun-tanned ancient human hands pressing wet dark brown mud into a rough wooden brick mold on a raw stone surface, beside sparse broken dry straw and a cracked unfired mudbrick",
+        topic: "mudbrick, straw, hardship, prayer, ancient Middle East"
+      },
+      prayer: {
+        bg: "a quiet ancient Judean stone courtyard at golden hour, warm sunbeams crossing rough limestone masonry and an uncluttered sunlit plaster wall",
+        cut1: "an elderly ancient Middle Eastern man with eyes gently lifted in reverent silent prayer, deep character lines, calm hopeful expression, coarse woven wool shawl over linen tunic",
+        cut2: "weathered human hands clasped together gently in earnest prayer near a coarse linen garment over a raw stone ledge",
+        topic: "prayer, faith, devotion, hope, ancient Middle East"
+      },
+      shepherd: {
+        bg: "rocky Judean hills covered with sparse dry pasture grass under soft morning golden light, distant open horizon",
+        cut1: "a calm, watchful ancient Middle Eastern shepherd looking attentively over the hillside, weathered sun-tanned face, natural beard, traditional coarse striped wool cloak",
+        cut2: "rough weathered human hands resting firmly on a carved rustic wooden shepherd staff beside soft coarse natural sheep wool",
+        topic: "shepherd, guidance, care, sheep, ancient pasture"
+      },
+      bread: {
+        bg: "a humble ancient Middle Eastern stone dwelling table lit by warm natural window light, raw rustic stone wall in the background",
+        cut1: "a serene ancient Jewish man looking down with gratitude and warmth, soft natural morning light across his face, simple coarse linen tunic",
+        cut2: "a pair of weathered human hands gently breaking a rustic baked coarse barley bread loaf on a raw weathered wooden and stone table",
+        topic: "breaking bread, fellowship, gratitude, barley loaf, rustic table"
+      },
+      scroll: {
+        bg: "an ancient stone study niche lit by soft natural side light and warm ambient tones, raw chiseled limestone surface",
+        cut1: "a thoughtful ancient Middle Eastern scribe looking intently in quiet contemplation, natural olive complexion, grey-streaked beard, coarse dark linen robe",
+        cut2: "aged human hands gently unrolling a weathered blank parchment scroll beside a small handmade terracotta oil lamp with a steady flame",
+        topic: "ancient scroll, wisdom, scripture, terracotta lamp, study"
+      },
+      sower: {
+        bg: "sunlit dry plowed earth and rocky soil in an ancient Middle Eastern terraced field under clear morning light",
+        cut1: "a determined ancient Middle Eastern farmer gazing across the sunlit field with quiet hope, sun-weathered skin, sweat and dust, coarse burlap-like linen tunic",
+        cut2: "calloused human hands cupped open holding golden wheat seeds ready to scatter over dark cracked dry soil",
+        topic: "sower, wheat seeds, harvest, patience, ancient agriculture"
+      },
+      custom: {
+        bg: "an ancient Middle Eastern stone courtyard bathed in warm natural afternoon sunlight, clean uncluttered raw sandstone background",
+        cut1: "an ancient Middle Eastern Jewish person with a deeply sincere and emotional expression, weathered natural skin, coarse unbleached linen clothing",
+        cut2: "a pair of weathered human hands performing a gentle, purposeful action with natural ancient wooden or clay objects on a raw stone surface",
+        topic: "biblical concept, faith, ancient history, reflection, sunlight"
+      }
+    };
+
+    let currentTechScore = 0;
+    let hasUploadedImage = false;
+    let currentImageBase64 = null;
+
+    function init() {
+      applyPresetFields();
+      updateApiBadge();
+    }
+
+    function switchTab(num) {
+      document.getElementById('tab1').classList.toggle('hidden', num !== 1);
+      document.getElementById('tab2').classList.toggle('hidden', num !== 2);
+      const b1 = document.getElementById('tabBtn1');
+      const b2 = document.getElementById('tabBtn2');
+      if (num === 1) {
+        b1.className = "px-5 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-slate-950 transition";
+        b2.className = "px-5 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition";
+      } else {
+        b2.className = "px-5 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-slate-950 transition";
+        b1.className = "px-5 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition";
+      }
+    }
+
+    function applyPresetFields() {
+      const key = document.getElementById('presetSelect').value;
+      const p = PRESETS[key];
+      document.getElementById('customBg').value = p.bg;
+      document.getElementById('customCut1').value = p.cut1;
+      document.getElementById('customCut2').value = p.cut2;
+      document.getElementById('customTopic').value = p.topic;
+      buildLocalPrompts();
+    }
+
+    async function generatePrompts() {
+      const apiKey = localStorage.getItem('gemini_api_key');
+      if (apiKey) {
+        await generateWithGemini(apiKey);
+      } else {
+        buildLocalPrompts();
+        showToast("로컬 엔진으로 3단계 프롬프트가 생성되었습니다!");
+      }
+    }
+
+    function buildLocalPrompts() {
+      const bg = document.getElementById('customBg').value.trim();
+      const c1 = document.getElementById('customCut1').value.trim();
+      const c2 = document.getElementById('customCut2').value.trim();
+      const topic = document.getElementById('customTopic').value.trim();
+
+      const cut1Steps = [
+        {
+          label: "Step 1 - Create the space and background",
+          text: `Create a 16:9 cinematic wide-angle background scene of ${bg}. On the left two-thirds of the frame, keep an uncluttered, open natural copy space featuring soft sunlit stone or dusty warm atmospheric tones. Shot on a 35mm lens with natural daylight, clean commercial stock photography aesthetic, no people, no text, no watermarks.`
+        },
+        {
+          label: "Step 2 - Place key materials",
+          text: `Keep the exact background, sunlight direction, 16:9 framing, and clean left-side copy space from the previous image. On the right third of the frame, place a close-up portrait of ${c1} in profile-three-quarter view. Ensure facial anatomy, eyes, nose, and natural neck posture are completely realistic and undistorted.`
+        },
+        {
+          label: "Step 3 - Expressing details and adding special effects",
+          text: `Preserve the exact composition, left copy space, and facial anatomy from the previous step. Enhance to ultra-detailed 8k photorealistic commercial stock photo quality shot on a 35mm lens. Render pin-sharp focus from foreground to background with realistic skin pores, authentic coarse fabric grain, ultra-detailed raw stone texture, natural golden sunlight rim lighting, and subtle floating dust motes, completely free of artifacts.`
+        }
+      ];
+
+      const cut2Steps = [
+        {
+          label: "Step 1 - Create the space and background",
+          text: `Create a 16:9 realistic ground-level background scene matching ${bg}. Position a weathered, textured raw stone work surface across the lower-right area, while leaving the upper-left area as a clean, uncluttered natural copy space of warm sunlit earth or stone tones. Natural directional daylight casting crisp shadows. Shot on a 35mm lens, commercial stock photo style, no people, no text, no logos.`
+        },
+        {
+          label: "Step 2 - Place key materials",
+          text: `Keep the exact stone surface, sunlight direction, and open upper-left copy space from the previous image. In the right-center foreground, place a close-up of ${c2}. Ensure both hands show anatomically clear, natural five-finger structure with realistic knuckles and fingernails in a natural relaxed grip.`
+        },
+        {
+          label: "Step 3 - Expressing details and adding special effects",
+          text: `Preserve the exact composition, hand anatomy, five natural fingers, and upper-left copy space from the previous step. Elevate to ultra-detailed 8k photorealistic commercial stock photography shot on a 35mm lens with pin-sharp focus from foreground to background. Emphasize realistic skin pores, weathered knuckles, ultra-detailed raw stone texture, authentic coarse fabric grain at the wrists, natural directional sunlight highlights, and zero artifacts.`
+        }
+      ];
+
+      renderSteps('cut1Steps', cut1Steps, 'c1');
+      renderSteps('cut2Steps', cut2Steps, 'c2');
+
+      const topicArr = topic.split(',').map(s => s.trim()).filter(Boolean);
+      const tMain = topicArr.slice(0, 3).join(', ');
+      document.getElementById('cut1Title').textContent = `Close up portrait of ${c1.split(',')[0]} with natural copy space reflecting ${tMain}`;
+      document.getElementById('cut2Title').textContent = `Close up of ${c2.split(',')[0]} in ancient Middle East with natural copy space`;
+
+      const baseKw1 = [...topicArr, "ancient", "Middle Eastern", "Jewish", "biblical", "portrait", "close up", "copy space", "coarse linen", "sandstone", "natural sunlight", "weathered", "faith", "hope", "reflection", "historical", "35mm", "photorealistic", "commercial stock", "storytelling", "emotion", "serenity", "heritage"];
+      const baseKw2 = [...topicArr, "human hands", "close up", "ancient", "Middle East", "biblical", "raw stone", "craftsmanship", "coarse fabric", "copy space", "sunlight", "weathered hands", "texture", "historical", "devotion", "tradition", "natural light", "35mm", "photorealistic", "rustic", "authentic", "earth tones", "detail"];
+
+      document.getElementById('cut1Keywords').textContent = [...new Set(baseKw1)].slice(0, 25).join(', ');
+      document.getElementById('cut2Keywords').textContent = [...new Set(baseKw2)].slice(0, 25).join(', ');
+    }
+
+    function renderSteps(containerId, steps, prefix) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = steps.map((s, idx) => {
+        const elId = `${prefix}_step_${idx}`;
+        return `
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold text-slate-300">${s.label}</span>
+              <button onclick="copyById('${elId}')" class="text-[11px] px-2.5 py-0.5 rounded bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 font-semibold transition">복사</button>
+            </div>
+            <p id="${elId}" class="text-xs text-slate-300 mono leading-relaxed">${s.text}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function generateWithGemini(apiKey) {
+      const ref = document.getElementById('verseRef').value;
+      const verse = document.getElementById('verseText').value;
+      showToast("Gemini AI가 성경 구절을 분석 중입니다...");
+
+      const systemPrompt = `You are a top visual storytelling artist and Adobe Stock compliance expert.
+Given the Bible passage (${ref}: ${verse}), design 2 photorealistic 16:9 close-up concepts for Google Flow sequential 3-step input (Nano Banana 2.1 & Pro optimized).
+CRITICAL RULES:
+- Adobe Stock approval (95%+) is TOP priority: strictly avoid blood, wounds, violence, crowds, text, logos, famous actors. Convert any violent biblical imagery into safe, poignant symbolic objects/emotions.
+- Ancient Middle Eastern / Jewish realistic setting, natural copy space, 35mm lens, pin-sharp focus from foreground to background, raw stone texture, coarse fabric grain, realistic skin pores, natural 5 fingers.
+- Cut 1: Emotional close-up of 1 ancient Middle Eastern person.
+- Cut 2: Close-up of weathered human hands & key object (zero face distortion risk).
+- Step 2 MUST start with "Keep the exact..." and Step 3 MUST start with "Preserve the exact..." for Flow multi-turn editing.
+Return STRICT JSON ONLY:
+{
+  "cut1": { "step1": "...", "step2": "...", "step3": "...", "title": "...", "keywords": "25 comma-separated safe English keywords" },
+  "cut2": { "step1": "...", "step2": "...", "step3": "...", "title": "...", "keywords": "25 comma-separated safe English keywords" }
+}`;
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: systemPrompt }] }],
+            generationConfig: { responseMimeType: "application/json" }
+          })
+        });
+        const data = await res.json();
+        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        const parsed = JSON.parse(raw);
+
+        renderSteps('cut1Steps', [
+          { label: "Step 1 - Create the space and background", text: parsed.cut1.step1 },
+          { label: "Step 2 - Place key materials", text: parsed.cut1.step2 },
+          { label: "Step 3 - Expressing details and adding special effects", text: parsed.cut1.step3 }
+        ], 'c1');
+        renderSteps('cut2Steps', [
+          { label: "Step 1 - Create the space and background", text: parsed.cut2.step1 },
+          { label: "Step 2 - Place key materials", text: parsed.cut2.step2 },
+          { label: "Step 3 - Expressing details and adding special effects", text: parsed.cut2.step3 }
+        ], 'c2');
+
+        document.getElementById('cut1Title').textContent = parsed.cut1.title;
+        document.getElementById('cut1Keywords').textContent = parsed.cut1.keywords;
+        document.getElementById('cut2Title').textContent = parsed.cut2.title;
+        document.getElementById('cut2Keywords').textContent = parsed.cut2.keywords;
+        showToast("Gemini AI 생성 완료!");
+      } catch (e) {
+        alert("API 호출 오류가 발생하여 로컬 생성 모드로 대체합니다: " + e.message);
+        buildLocalPrompts();
+      }
+    }
+
+    function copyMasterMetaPrompt() {
+      const ref = document.getElementById('verseRef').value;
+      const verse = document.getElementById('verseText').value;
+      const master = `Act as a top image artist and Adobe Stock compliance expert. Based on this Bible passage (${ref}):
+"${verse}"
+
+Create 2 photorealistic 16:9 close-up concepts optimized for Google Flow sequential 3-step input (Nano Banana 2.1 & Pro).
+Rules:
+1. Adobe Stock 95% approval is top priority: strictly NO blood, violence, crowds, text, or logos. Transform harsh themes into safe symbolic objects/emotions.
+2. Ancient Middle Eastern / Jewish realistic setting, natural copy space, 35mm lens, pin-sharp focus from foreground to background, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, perfect human hand with 5 natural fingers, 8k resolution, commercial stock photo.
+3. Cut 1: Emotional close-up of 1 person. Cut 2: Close-up of human hands & key object.
+4. Write Step 1 (Space & background), Step 2 (Keep the exact background... Place key materials), Step 3 (Preserve the exact composition... Expressing details & special effects) in English.
+5. Also provide Adobe Stock English Title (under 200 chars) and 25 safe English Keywords for each cut.`;
+      navigator.clipboard.writeText(master);
+      showToast("Gemini/ChatGPT 웹 복사용 마스터 요청문이 복사되었습니다!");
+    }
+
+    function downloadCSV() {
+      const rows = [
+        ["Filename", "Title", "Keywords", "Category"],
+        ["cut1_image.jpg", document.getElementById('cut1Title').textContent, document.getElementById('cut1Keywords').textContent, "Religion"],
+        ["cut2_image.jpg", document.getElementById('cut2Title').textContent, document.getElementById('cut2Keywords').textContent, "Religion"]
+      ];
+      const csvContent = rows.map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "adobe_stock_metadata.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /* TAB 2: IMAGE AUDITOR */
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        currentImageBase64 = evt.target.result;
+        const img = new Image();
+        img.onload = function() {
+          hasUploadedImage = true;
+          document.getElementById('previewContainer').classList.remove('hidden');
+          document.getElementById('previewImg').src = evt.target.result;
+          runLocalTechnicalAudit(img);
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function runLocalTechnicalAudit(img) {
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      const mp = (w * h) / 1000000;
+      const ratio = w / h;
+      const is169 = Math.abs(ratio - (16 / 9)) < 0.05;
+      const is4MP = mp >= 4.0;
+
+      document.getElementById('imgDimBadge').textContent = `${w} × ${h} (${mp.toFixed(2)} MP)`;
+
+      // Corner 400% Crop for Watermark Detection
+      const cCanvas = document.getElementById('cornerCanvas');
+      const cCtx = cCanvas.getContext('2d');
+      cCtx.clearRect(0, 0, 140, 140);
+      const cropSize = Math.min(120, Math.floor(Math.min(w, h) * 0.14));
+      cCtx.drawImage(img, w - cropSize, h - cropSize, cropSize, cropSize, 0, 0, 140, 140);
+
+      // Exposure & Sharpness Sampling on downscaled canvas
+      const aCanvas = document.createElement('canvas');
+      const sw = 320;
+      const sh = Math.round(320 * (h / w));
+      aCanvas.width = sw;
+      aCanvas.height = sh;
+      const aCtx = aCanvas.getContext('2d');
+      aCtx.drawImage(img, 0, 0, sw, sh);
+      const pixels = aCtx.getImageData(0, 0, sw, sh).data;
+
+      let sumLum = 0;
+      let edgeSum = 0;
+      const lumArr = new Float32Array(sw * sh);
+
+      for (let i = 0; i < pixels.length; i += 4) {
+        const lum = 0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2];
+        lumArr[i / 4] = lum;
+        sumLum += lum;
+      }
+      const avgLum = sumLum / (sw * sh);
+
+      for (let y = 1; y < sh - 1; y++) {
+        for (let x = 1; x < sw - 1; x++) {
+          const idx = y * sw + x;
+          const lap = Math.abs(4 * lumArr[idx] - lumArr[idx - 1] - lumArr[idx + 1] - lumArr[idx - sw] - lumArr[idx + sw]);
+          edgeSum += lap;
+        }
+      }
+      const avgEdge = edgeSum / (sw * sh);
+      const goodExposure = avgLum >= 45 && avgLum <= 215;
+      const goodSharpness = avgEdge >= 10;
+
+      // Score calculation (max 35 from tech checks, 65 from checklist)
+      currentTechScore = (is4MP ? 15 : 4) + (is169 ? 5 : 0) + (goodExposure ? 8 : 3) + (goodSharpness ? 7 : 2);
+
+      const checksHtml = [
+        renderCheckRow("해상도 (최소 4MP 이상)", is4MP, `${mp.toFixed(2)} MP (${w}×${h})`, is4MP ? "어도비 스톡 최소 해상도 기준 통과" : "4MP 미만! 업로드 전 2배 이상 업스케일(4K) 필수"),
+        renderCheckRow("16:9 와이드 비율", is169, `비율 ${ratio.toFixed(2)}`, is169 ? "16:9 설교 스크린 규격 일치" : "16:9 비율과 다릅니다"),
+        renderCheckRow("노출(밝기) 밸런스", goodExposure, `평균 휘도 ${Math.round(avgLum)}/255`, goodExposure ? "과다/과소 노출 없이 적정함" : "너무 어둡거나 밝아 보정 권장"),
+        renderCheckRow("전반적 엣지 선명도", goodSharpness, `선명도 지수 ${avgEdge.toFixed(1)}`, goodSharpness ? "디테일과 윤곽이 또렷함" : "흐릿함(Out of focus) 주의")
+      ].join('');
+
+      document.getElementById('techChecks').innerHTML = checksHtml;
+      recalculateScore();
+    }
+
+    function renderCheckRow(title, pass, metric, desc) {
+      return `
+        <div class="p-3 rounded-xl bg-slate-950 border ${pass ? 'border-emerald-500/30' : 'border-rose-500/40'} flex items-center justify-between gap-3">
+          <div>
+            <div class="font-bold ${pass ? 'text-emerald-300' : 'text-rose-400'}">${pass ? '✅' : '⚠️'} ${title}</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">${desc}</div>
+          </div>
+          <span class="text-xs font-mono px-2 py-1 rounded bg-slate-900 text-slate-200 shrink-0">${metric}</span>
+        </div>
+      `;
+    }
+
+    function recalculateScore() {
+      if (!hasUploadedImage) return;
+      let manualScore = 0;
+      document.querySelectorAll('.audit-chk').forEach(chk => {
+        if (chk.checked) manualScore += Number(chk.dataset.weight);
+      });
+      const total = Math.min(99, currentTechScore + manualScore);
+      const scoreEl = document.getElementById('finalScore');
+      scoreEl.textContent = `${total}%`;
+
+      if (total >= 90) {
+        scoreEl.className = "text-2xl font-extrabold text-emerald-400";
+        document.getElementById('verdictBox').innerHTML = `<span class="text-emerald-300 font-bold">승인 준비 완료 (${total}%):</span> 기술적 기준과 스톡 정책 검수를 모두 통과했습니다. CSV 메타데이터와 함께 업로드하세요.`;
+      } else if (total >= 70) {
+        scoreEl.className = "text-2xl font-extrabold text-amber-400";
+        document.getElementById('verdictBox').innerHTML = `<span class="text-amber-300 font-bold">보완 후 업로드 권장 (${total}%):</span> 4MP 업스케일링 여부나 우측 하단 워터마크·체크리스트 미확인 항목을 점검해 주세요.`;
+      } else {
+        scoreEl.className = "text-2xl font-extrabold text-rose-400";
+        document.getElementById('verdictBox').innerHTML = `<span class="text-rose-400 font-bold">반려 위험 높음 (${total}%):</span> 해상도(4MP) 부족 또는 워터마크/체크리스트 미통과 상태입니다.`;
+      }
+    }
+
+    async function runGeminiVisionAudit() {
+      const apiKey = localStorage.getItem('gemini_api_key');
+      if (!apiKey || !currentImageBase64) return;
+      const outBox = document.getElementById('aiAuditResult');
+      outBox.classList.remove('hidden');
+      outBox.textContent = "🤖 Gemini Vision이 손가락, 눈동자, AI 워터마크, 정책 위반을 정밀 스캔 중입니다...";
+
+      const base64Data = currentImageBase64.split(',')[1];
+      const mimeType = currentImageBase64.split(';')[0].split(':')[1];
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: "You are a strict Adobe Stock moderator. Inspect this image for: 1) AI watermark (especially bottom-right star mark), 2) Hand/finger/eye anatomy errors, 3) Artifacts/blur, 4) Violence/IP issues, 5) Copy space quality. Give a concise Korean report with Pass/Reject risk and exact fix needed." },
+                { inlineData: { mimeType, data: base64Data } }
+              ]
+            }]
+          })
+        });
+        const data = await res.json();
+        outBox.textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || "응답을 해석하지 못했습니다.";
+      } catch (e) {
+        outBox.textContent = "오류 발생: " + e.message;
+      }
+    }
+
+    /* API Modal & Utils */
+    function toggleApiModal() {
+      const m = document.getElementById('apiModal');
+      m.classList.toggle('hidden');
+      document.getElementById('geminiApiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
+    }
+
+    function saveApiKey() {
+      const val = document.getElementById('geminiApiKeyInput').value.trim();
+      if (val) {
+        localStorage.setItem('gemini_api_key', val);
+        showToast("Gemini API 키가 안전하게 브라우저에 저장되었습니다.");
+      }
+      updateApiBadge();
+      toggleApiModal();
+    }
+
+    function clearApiKey() {
+      localStorage.removeItem('gemini_api_key');
+      document.getElementById('geminiApiKeyInput').value = '';
+      updateApiBadge();
+      toggleApiModal();
+      showToast("API 키가 삭제되어 무료 로컬 모드로 전환되었습니다.");
+    }
+
+    function updateApiBadge() {
+      const hasKey = Boolean(localStorage.getItem('gemini_api_key'));
+      const badge = document.getElementById('apiStatusBadge');
+      const aiBtn = document.getElementById('aiAuditBtn');
+      if (hasKey) {
+        badge.textContent = "Gemini AI 연동 활성";
+        badge.className = "text-xs px-2.5 py-1 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30";
+        aiBtn.classList.remove('hidden');
+      } else {
+        badge.textContent = "무료 로컬 모드 작동중";
+        badge.className = "text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30";
+        aiBtn.classList.add('hidden');
+      }
+    }
+
+    function copyById(id) {
+      const txt = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(txt);
+      showToast("클립보드에 복사되었습니다!");
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 2400);
+    }
+
+    init();
+  </script>
+</body>
+</html>
