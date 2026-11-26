@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bible Flow Studio v0.1.7 — 본문 충실 서사 직관형 · 스톡 검수기</title>
+  <title>Bible Flow Studio v0.1.8 — 본문·이미지 샘플 3단계 프롬프트 & 스톡 검수기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
@@ -24,10 +24,10 @@
           <div class="flex items-center gap-2">
             <h1 class="text-lg font-bold tracking-tight text-white">Bible Flow Studio</h1>
             <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
-              v0.1.7
+              v0.1.8
             </span>
           </div>
-          <p class="text-xs text-slate-400">본문 충실 서사 직관형 · 16:9 황금비율 배치 · Adobe Stock 95% 검수</p>
+          <p class="text-xs text-slate-400">본문 충실 서사 · 이미지 샘플 역산 · 16:9 황금비율 · Adobe Stock 95% 검수</p>
         </div>
       </div>
 
@@ -44,12 +44,15 @@
 
   <!-- Navigation Tabs -->
   <div class="max-w-7xl mx-auto px-4 pt-5">
-    <div class="inline-flex rounded-xl bg-slate-900 p-1 border border-slate-800">
-      <button id="tabBtn1" onclick="switchTab(1)" class="px-5 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-slate-950 transition">
-        1. 본문 충실 서사 직관형 프롬프트
+    <div class="inline-flex flex-wrap rounded-xl bg-slate-900 p-1 border border-slate-800 gap-1">
+      <button id="tabBtn1" onclick="switchTab(1)" class="px-4 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-slate-950 transition">
+        1. 본문 충실 서사 프롬프트
       </button>
-      <button id="tabBtn2" onclick="switchTab(2)" class="px-5 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition">
-        2. 어도비 스톡 95% 승인 검수기
+      <button id="tabBtn2" onclick="switchTab(2)" class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition">
+        2. 이미지 샘플 → 프롬프트 역산
+      </button>
+      <button id="tabBtn3" onclick="switchTab(3)" class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition">
+        3. 어도비 스톡 95% 검수기
       </button>
     </div>
   </div>
@@ -121,18 +124,16 @@
 
         <!-- Generated Prompts Wrapper -->
         <div id="resultsWrapper" class="hidden space-y-5">
-          <!-- Bar -->
           <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-4">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="text-sm font-bold text-white">Flow 3단계 프롬프트</span>
               <span class="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">본문 충실 · 16:9 황금비율</span>
             </div>
-            <button id="csvBtn" onclick="downloadCSV()" class="text-xs px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">
+            <button id="csvBtn" onclick="downloadCSV('tab1')" class="text-xs px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">
               ⬇ 어도비 스톡 CSV 다운로드
             </button>
           </div>
 
-          <!-- Flow Error Helper Banner -->
           <div class="bg-slate-900/90 border border-rose-500/30 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
             <div class="text-xs text-slate-300 space-y-0.5">
               <div class="font-bold text-rose-300">🚫 구글 Flow에서 "이미지를 만들 수 없습니다" 에러가 떴나요?</div>
@@ -161,10 +162,8 @@
             </div>
 
             <div id="cut1FixNotice" class="hidden p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200"></div>
-
             <div class="space-y-3" id="cut1Steps"></div>
 
-            <!-- Cut 1 Metadata -->
             <div class="pt-2 border-t border-slate-800 space-y-2.5">
               <div>
                 <div class="flex justify-between items-center mb-1">
@@ -204,10 +203,8 @@
             </div>
 
             <div id="cut2FixNotice" class="hidden p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200"></div>
-
             <div class="space-y-3" id="cut2Steps"></div>
 
-            <!-- Cut 2 Metadata -->
             <div class="pt-2 border-t border-slate-800 space-y-2.5">
               <div>
                 <div class="flex justify-between items-center mb-1">
@@ -226,13 +223,129 @@
             </div>
           </div>
         </div>
-
       </section>
     </div>
   </main>
 
-  <!-- TAB 2: ADOBE STOCK 95% AUDITOR -->
+  <!-- TAB 2: IMAGE SAMPLE TO 3-STEP PROMPT -->
   <main id="tab2" class="hidden max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Left: Sample Upload & Visual Trait Extractor -->
+      <section class="lg:col-span-5 space-y-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <h2 class="text-base font-bold text-amber-400 mb-1">이미지 샘플 업로드</h2>
+              <p class="text-xs text-slate-400">참고할 샘플 사진을 올리면 그 이미지 그대로 Flow 3단계 프롬프트를 역산 작성합니다.</p>
+            </div>
+            <button onclick="resetSampleTab()" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0">초기화</button>
+          </div>
+
+          <div id="sampleDropZone" onclick="document.getElementById('sampleInput').click()"
+            class="border-2 border-dashed border-slate-700 hover:border-amber-500 bg-slate-950 rounded-2xl p-6 text-center cursor-pointer transition">
+            <input id="sampleInput" type="file" accept="image/*" class="hidden" onchange="handleSampleUpload(event)" />
+            <div class="text-3xl mb-1.5">📷</div>
+            <p class="text-sm font-bold text-white">샘플 이미지를 클릭하거나 끌어다 놓으세요</p>
+            <p class="text-xs text-slate-400 mt-1">샘플 구도·색감·조명·소재를 분석해 3단계 프롬프트로 변환합니다</p>
+          </div>
+
+          <div id="samplePreviewBox" class="hidden space-y-3">
+            <img id="samplePreviewImg" class="w-full rounded-xl border border-slate-800 object-contain max-h-64 bg-black" alt="Sample Preview" />
+            <div id="sampleAutoVisualInfo" class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-1"></div>
+          </div>
+
+          <!-- Sample Description Helper (Works even without API) -->
+          <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-sky-400">샘플 장면 요소 (API 없을 때 직접 지정 가능)</span>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">1) 성경 출처 (선택 · 영문 제목 반영)</label>
+              <input id="sampleBibleRef" type="text" placeholder="예: 출애굽기 5장 (비워두면 일반 제목)"
+                class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">2) 샘플 이미지 속 공간/배경 묘사 (한글 또는 영문)</label>
+              <input id="sampleBgDesc" type="text" placeholder="예: 햇살 비치는 고대 사암 벽돌 작업장, 사막 언덕 등"
+                class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">3) 샘플 이미지 속 핵심 인물/손/사물 묘사 (한글 또는 영문)</label>
+              <textarea id="sampleSubjectDesc" rows="2" placeholder="예: 먼지 묻은 리넨 옷을 입은 중동인이 진흙 벽돌을 빚고 있는 클로즈업 손"
+                class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500"></textarea>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-2">
+            <button id="sampleGenerateBtn" onclick="generatePromptFromSample()" class="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/10">
+              ✨ 이미지 샘플 → 3단계 프롬프트 작성
+            </button>
+            <button onclick="copySampleWebPrompt()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition">
+              📋 샘플 이미지와 함께 Gemini/ChatGPT 웹에 붙일 요청문 복사
+            </button>
+          </div>
+          <div id="sampleApiBanner" class="hidden p-3 rounded-xl bg-rose-950/50 border border-rose-500/40 text-xs text-rose-200 leading-relaxed"></div>
+        </div>
+      </section>
+
+      <!-- Right: Sample Reverse Prompt Output -->
+      <section class="lg:col-span-7 space-y-5">
+        <div id="sampleEmptyState" class="bg-slate-900 border border-dashed border-slate-800 rounded-2xl p-14 text-center space-y-3">
+          <div class="text-4xl">🎨</div>
+          <h3 class="text-base font-bold text-slate-200">샘플 역산 프롬프트 창이 비어 있습니다</h3>
+          <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+            왼쪽에 <strong>샘플 이미지</strong>를 업로드하거나 장면 설명을 적은 뒤<br/>
+            <span class="text-amber-400 font-semibold">[✨ 이미지 샘플 → 3단계 프롬프트 작성]</span>을 누르시면,<br/>
+            동일한 분위기와 구도를 재현하는 Step 1·2·3 프롬프트가 생성됩니다.
+          </p>
+        </div>
+
+        <div id="sampleResultWrapper" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-amber-400">이미지 샘플 역산 결과 · Flow 3단계</span>
+              <h3 class="text-sm font-semibold text-white mt-0.5">Nano Banana 2.1/Pro 최적화 · 직접 수정 가능</h3>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button onclick="fixFlowError('sample', 'safety')" class="text-[11px] px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-semibold transition">
+                🛡️ 안전 필터 우회
+              </button>
+              <button onclick="fixFlowError('sample', 'simplify')" class="text-[11px] px-2.5 py-1 rounded-lg bg-sky-500/15 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 font-semibold transition">
+                ⚡ 지시 단순화
+              </button>
+              <button onclick="downloadCSV('tab2')" class="text-[11px] px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">
+                ⬇ CSV
+              </button>
+            </div>
+          </div>
+
+          <div id="sampleFixNotice" class="hidden p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200"></div>
+          <div class="space-y-3" id="sampleSteps"></div>
+
+          <div class="pt-2 border-t border-slate-800 space-y-2.5">
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 제목 (Title · 200자 이내)</span>
+                <button onclick="copyValById('sampleTitle')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
+              </div>
+              <input id="sampleTitle" type="text" class="w-full text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 mono focus:outline-none focus:border-emerald-500" />
+            </div>
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-emerald-400">Adobe Stock 영문 키워드 (25개)</span>
+                <button onclick="copyValById('sampleKeywords')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">복사</button>
+              </div>
+              <textarea id="sampleKeywords" rows="2" class="w-full text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-300 mono leading-relaxed focus:outline-none focus:border-emerald-500"></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- TAB 3: ADOBE STOCK 95% AUDITOR -->
+  <main id="tab3" class="hidden max-w-7xl mx-auto px-4 py-6 space-y-6">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
       <!-- Upload & Visual Preview -->
@@ -282,7 +395,6 @@
           </div>
         </div>
 
-        <!-- Auto Technical Metrics -->
         <div class="space-y-2.5">
           <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">1. 자동 기술 수치 검사 (브라우저 무료 분석)</h3>
           <div id="techChecks" class="space-y-2 text-xs">
@@ -292,7 +404,6 @@
           </div>
         </div>
 
-        <!-- Manual / AI Checklist -->
         <div class="space-y-2.5">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-bold uppercase tracking-wider text-sky-400">2. 해부학 &amp; 어도비 스톡 정책 검수</h3>
@@ -337,7 +448,7 @@
         <button onclick="toggleApiModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">
-        API 키를 연결하면 어떤 성경 구절이든 AI가 문맥을 100% 이해해 완벽하게 작성합니다. (무료 티어 제한 시에는 마스터 요청문 복사 버튼을 활용해 주세요.)
+        API 키를 연결하면 성경 본문 작성과 샘플 이미지 자동 역산이 모두 AI로 처리됩니다.
       </p>
       <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1">Gemini API Key</label>
@@ -405,7 +516,6 @@
       ["몬", "Philemon"], ["히", "Hebrews"], ["약", "James"], ["유", "Jude"], ["계", "Revelation"]
     ];
 
-    // exactWord: true면 영문 단어 경계(\b)와 문맥을 엄격히 검사하여 "was well again" 같은 오인식 원천 차단
     const CONCRETE_ELEMENTS = [
       {
         keys: ["inside your clothes", "near to your heart", "white as snow", "leprosy", "품에 넣", "품 속", "눈처럼 희", "나병", "문둥병"],
@@ -416,190 +526,32 @@
         obj: "the folds of a coarse unbleached ancient linen tunic near the chest",
         kw: "pale hand"
       },
-      {
-        keys: ["snake", "serpent", "뱀"],
-        chip: "#땅 위의 뱀",
-        obj: "a realistic desert snake coiled on dusty sunlit ground",
-        kw: "snake"
-      },
-      {
-        keys: ["stick", "staff", "rod", "지팡이", "막대기"],
-        exact: true,
-        chip: "#나무 지팡이",
-        obj: "a rough, natural wooden shepherd stick",
-        kw: "wooden stick"
-      },
-      {
-        keys: ["throw", "threw", "ground", "floor", "dust", "던지", "땅에", "바닥", "먼지"],
-        exact: true,
-        chip: "#거친 흙바닥·던짐",
-        bg: "a sun-baked ancient Middle Eastern dry earth and dusty desert ground under crisp afternoon light",
-        handPose: "hands reaching or reacting over sunlit dusty desert earth",
-        kw: "desert ground"
-      },
-      {
-        keys: ["ran from", "fear", "afraid", "tremble", "놀라", "피하", "두려", "도망"],
-        chip: "#놀람·물러서는 동작",
-        emotion: "stepping back suddenly with wide startled eyes and tense alarm",
-        kw: "alarm"
-      },
-      {
-        keys: ["catch", "tail", "grab", "잡으라", "잡았", "꼬리"],
-        exact: true,
-        chip: "#손으로 잡는 동작",
-        handPose: "a weathered human hand carefully reaching out to grab the object on the ground",
-        kw: "grasping hand"
-      },
-      {
-        keys: ["bush", "thorn", "fire", "flame", "burn", "떨기나무", "불꽃", "불"],
-        exact: true,
-        chip: "#불타는 떨기나무·불꽃",
-        obj: "a weathered desert thorn bush burning with bright warm golden flames",
-        kw: "burning bush"
-      },
-      {
-        keys: ["brick", "mud", "clay", "straw", "벽돌", "진흙", "짚"],
-        exact: true,
-        chip: "#진흙 벽돌·마른 짚",
-        obj: "a rough wooden brick mold, wet clay mud, and sparse broken dry straw",
-        kw: "mudbrick"
-      },
-      {
-        keys: ["worship", "bow", "heads down", "kneel", "경배", "머리 숙", "엎드려", "절하"],
-        exact: true,
-        chip: "#머리 숙인 경배",
-        emotion: "with head gently bowed and eyes softly closed in deep reverence and worship",
-        handPose: "hands humbly pressed together in quiet reverence",
-        kw: "worship"
-      },
-      {
-        keys: ["pray", "prayer", "supplication", "기도", "간구", "부르짖"],
-        exact: true,
-        chip: "#간절한 기도",
-        emotion: "looking slightly skyward in earnest, sincere silent prayer",
-        handPose: "weathered hands folded gently in earnest prayer",
-        kw: "prayer"
-      },
-      {
-        keys: ["believed", "believe", "faith", "sign", "wonder", "믿었", "믿음", "표적", "이적"],
-        exact: true,
-        chip: "#믿음·경외의 시선",
-        emotion: "gazing forward with awe-struck eyes filled with deep belief and conviction",
-        kw: "faith"
-      },
-      {
-        keys: ["mercy", "hard life", "cry", "tear", "suffer", "고난", "불쌍", "긍휼", "눈물", "슬픔"],
-        exact: true,
-        chip: "#애절한 눈빛·눈물",
-        emotion: "with deeply expressive glistening eyes filled with sorrow and quiet endurance",
-        kw: "sorrow"
-      },
-      {
-        keys: ["sword", "spear", "shield", "war", "soldier", "칼", "창", "방패", "전쟁", "군사"],
-        exact: true,
-        chip: "#고대 검·방패",
-        obj: "an ancient weathered bronze sword and leather shield resting on raw stone",
-        kw: "ancient sword"
-      },
-      {
-        keys: ["blood", "crimson", "피", "핏방울"],
-        exact: true,
-        chip: "#붉은 흔적·상징",
-        obj: "a rough wooden lintel stained with deep crimson liquid beside hyssop branches",
-        kw: "crimson"
-      },
-      {
-        keys: ["shepherd", "sheep", "lamb", "flock", "목자", "양", "어린 양"],
-        exact: true,
-        chip: "#목자·양털",
-        obj: "soft natural sheep wool beside a rustic wooden shepherd staff",
-        kw: "shepherd"
-      },
-      {
-        keys: ["pasture", "grass", "field", "초장", "풀밭", "들판", "밭"],
-        exact: true,
-        chip: "#푸른 초장·들판",
-        bg: "sunlit ancient Judean grassy hills and open valley pasture under warm morning light",
-        kw: "pasture"
-      },
-      {
-        keys: ["water well", "draw water", "by the well", "jacob's well", "water jar", "river", "stream", "우물", "물동이", "강물", "시냇"],
-        chip: "#돌우물·흙 물동이",
-        obj: "a handmade weathered clay water jar resting on a sunlit raw stone well edge",
-        kw: "clay jar"
-      },
-      {
-        keys: ["sea", "boat", "ship", "storm", "wave", "fish", "fishing net", "바다", "배", "풍랑", "그물"],
-        exact: true,
-        chip: "#바다·나무배·그물",
-        bg: "an ancient rocky shoreline by sunlit waters at dawn with weathered timber dock edges",
-        obj: "thick woven natural hemp rope and coarse fishing net on weathered boat timber",
-        kw: "fishing net"
-      },
-      {
-        keys: ["bread", "loaf", "barley", "떡", "빵", "보리"],
-        exact: true,
-        chip: "#거친 보리빵",
-        obj: "a rustic baked coarse barley bread loaf being gently broken",
-        kw: "barley bread"
-      },
-      {
-        keys: ["wine", "cup", "chalice", "포도주", "잔"],
-        exact: true,
-        chip: "#토기 잔·포도주",
-        obj: "a humble handmade earthenware cup on a weathered wood and stone table",
-        kw: "earthenware cup"
-      },
-      {
-        keys: ["seed", "sow", "wheat", "grain", "harvest", "씨", "밀", "추수"],
-        exact: true,
-        chip: "#밀 씨앗·거친 흙",
-        obj: "golden wheat seeds cupped in palms above dark dry fertile soil",
-        kw: "wheat seeds"
-      },
-      {
-        keys: ["scroll", "book", "law", "write", "두루마리", "율법"],
-        exact: true,
-        chip: "#양피지 두루마리",
-        obj: "an aged blank parchment scroll gently unrolled on raw limestone",
-        kw: "ancient scroll"
-      },
-      {
-        keys: ["lamp", "candle", "oil lamp", "등불", "등잔"],
-        exact: true,
-        chip: "#토기 등잔·불빛",
-        obj: "a small handmade terracotta olive oil lamp with a warm steady flame",
-        kw: "oil lamp"
-      },
-      {
-        keys: ["mountain", "hill", "rock", "stone", "altar", "산", "언덕", "바위", "돌", "제단"],
-        exact: true,
-        chip: "#거친 사암 반석",
-        bg: "a rugged sunlit ancient Middle Eastern rocky mountainside with weathered raw limestone boulders",
-        obj: "sun-baked raw sandstone rocks stacked naturally",
-        kw: "raw stone"
-      },
-      {
-        keys: ["desert", "wilderness", "sand", "광야", "사막"],
-        exact: true,
-        chip: "#사막 광야길",
-        bg: "an expansive arid desert wilderness trail bathed in warm golden afternoon sunlight",
-        kw: "desert"
-      },
-      {
-        keys: ["olive", "vine", "branch", "fig", "감람", "올리브", "포도나무", "무화과"],
-        exact: true,
-        chip: "#올리브·포도 가지",
-        obj: "a fresh olive branch with silvery-green leaves resting on sunlit stone",
-        kw: "olive branch"
-      },
-      {
-        keys: ["sandal", "foot", "feet", "wash", "신발", "발", "씻"],
-        exact: true,
-        chip: "#가죽 신발·물그릇",
-        obj: "worn ancient leather sandals beside a stone basin of clear water",
-        kw: "leather sandals"
-      }
+      { keys: ["snake", "serpent", "뱀"], chip: "#땅 위의 뱀", obj: "a realistic desert snake coiled on dusty sunlit ground", kw: "snake" },
+      { keys: ["stick", "staff", "rod", "지팡이", "막대기"], exact: true, chip: "#나무 지팡이", obj: "a rough, natural wooden shepherd stick", kw: "wooden stick" },
+      { keys: ["throw", "threw", "ground", "floor", "dust", "던지", "땅에", "바닥", "먼지"], exact: true, chip: "#거친 흙바닥·던짐", bg: "a sun-baked ancient Middle Eastern dry earth and dusty desert ground under crisp afternoon light", handPose: "hands reaching or reacting over sunlit dusty desert earth", kw: "desert ground" },
+      { keys: ["ran from", "fear", "afraid", "tremble", "놀라", "피하", "두려", "도망"], chip: "#놀람·물러서는 동작", emotion: "stepping back suddenly with wide startled eyes and tense alarm", kw: "alarm" },
+      { keys: ["catch", "tail", "grab", "잡으라", "잡았", "꼬리"], exact: true, chip: "#손으로 잡는 동작", handPose: "a weathered human hand carefully reaching out to grab the object on the ground", kw: "grasping hand" },
+      { keys: ["bush", "thorn", "fire", "flame", "burn", "떨기나무", "불꽃", "불"], exact: true, chip: "#불타는 떨기나무·불꽃", obj: "a weathered desert thorn bush burning with bright warm golden flames", kw: "burning bush" },
+      { keys: ["brick", "mud", "clay", "straw", "벽돌", "진흙", "짚"], exact: true, chip: "#진흙 벽돌·마른 짚", obj: "a rough wooden brick mold, wet clay mud, and sparse broken dry straw", kw: "mudbrick" },
+      { keys: ["worship", "bow", "heads down", "kneel", "경배", "머리 숙", "엎드려", "절하"], exact: true, chip: "#머리 숙인 경배", emotion: "with head gently bowed and eyes softly closed in deep reverence and worship", handPose: "hands humbly pressed together in quiet reverence", kw: "worship" },
+      { keys: ["pray", "prayer", "supplication", "기도", "간구", "부르짖"], exact: true, chip: "#간절한 기도", emotion: "looking slightly skyward in earnest, sincere silent prayer", handPose: "weathered hands folded gently in earnest prayer", kw: "prayer" },
+      { keys: ["believed", "believe", "faith", "sign", "wonder", "믿었", "믿음", "표적", "이적"], exact: true, chip: "#믿음·경외의 시선", emotion: "gazing forward with awe-struck eyes filled with deep belief and conviction", kw: "faith" },
+      { keys: ["mercy", "hard life", "cry", "tear", "suffer", "고난", "불쌍", "긍휼", "눈물", "슬픔"], exact: true, chip: "#애절한 눈빛·눈물", emotion: "with deeply expressive glistening eyes filled with sorrow and quiet endurance", kw: "sorrow" },
+      { keys: ["sword", "spear", "shield", "war", "soldier", "칼", "창", "방패", "전쟁", "군사"], exact: true, chip: "#고대 검·방패", obj: "an ancient weathered bronze sword and leather shield resting on raw stone", kw: "ancient sword" },
+      { keys: ["blood", "crimson", "피", "핏방울"], exact: true, chip: "#붉은 흔적·상징", obj: "a rough wooden lintel stained with deep crimson liquid beside hyssop branches", kw: "crimson" },
+      { keys: ["shepherd", "sheep", "lamb", "flock", "목자", "양", "어린 양"], exact: true, chip: "#목자·양털", obj: "soft natural sheep wool beside a rustic wooden shepherd staff", kw: "shepherd" },
+      { keys: ["pasture", "grass", "field", "초장", "풀밭", "들판", "밭"], exact: true, chip: "#푸른 초장·들판", bg: "sunlit ancient Judean grassy hills and open valley pasture under warm morning light", kw: "pasture" },
+      { keys: ["water well", "draw water", "by the well", "jacob's well", "water jar", "river", "stream", "우물", "물동이", "강물", "시냇"], chip: "#돌우물·흙 물동이", obj: "a handmade weathered clay water jar resting on a sunlit raw stone well edge", kw: "clay jar" },
+      { keys: ["sea", "boat", "ship", "storm", "wave", "fish", "fishing net", "바다", "배", "풍랑", "그물"], exact: true, chip: "#바다·나무배·그물", bg: "an ancient rocky shoreline by sunlit waters at dawn with weathered timber dock edges", obj: "thick woven natural hemp rope and coarse fishing net on weathered boat timber", kw: "fishing net" },
+      { keys: ["bread", "loaf", "barley", "떡", "빵", "보리"], exact: true, chip: "#거친 보리빵", obj: "a rustic baked coarse barley bread loaf being gently broken", kw: "barley bread" },
+      { keys: ["wine", "cup", "chalice", "포도주", "잔"], exact: true, chip: "#토기 잔·포도주", obj: "a humble handmade earthenware cup on a weathered wood and stone table", kw: "earthenware cup" },
+      { keys: ["seed", "sow", "wheat", "grain", "harvest", "씨", "밀", "추수"], exact: true, chip: "#밀 씨앗·거친 흙", obj: "golden wheat seeds cupped in palms above dark dry fertile soil", kw: "wheat seeds" },
+      { keys: ["scroll", "book", "law", "write", "두루마리", "율법"], exact: true, chip: "#양피지 두루마리", obj: "an aged blank parchment scroll gently unrolled on raw limestone", kw: "ancient scroll" },
+      { keys: ["lamp", "candle", "oil lamp", "등불", "등잔"], exact: true, chip: "#토기 등잔·불빛", obj: "a small handmade terracotta olive oil lamp with a warm steady flame", kw: "oil lamp" },
+      { keys: ["mountain", "hill", "rock", "stone", "altar", "산", "언덕", "바위", "돌", "제단"], exact: true, chip: "#거친 사암 반석", bg: "a rugged sunlit ancient Middle Eastern rocky mountainside with weathered raw limestone boulders", obj: "sun-baked raw sandstone rocks stacked naturally", kw: "raw stone" },
+      { keys: ["desert", "wilderness", "sand", "광야", "사막"], exact: true, chip: "#사막 광야길", bg: "an expansive arid desert wilderness trail bathed in warm golden afternoon sunlight", kw: "desert" },
+      { keys: ["olive", "vine", "branch", "fig", "감람", "올리브", "포도나무", "무화과"], exact: true, chip: "#올리브·포도 가지", obj: "a fresh olive branch with silvery-green leaves resting on sunlit stone", kw: "olive branch" },
+      { keys: ["sandal", "foot", "feet", "wash", "신발", "발", "씻"], exact: true, chip: "#가죽 신발·물그릇", obj: "worn ancient leather sandals beside a stone basin of clear water", kw: "leather sandals" }
     ];
 
     const FLOW_SAFETY_REPLACEMENTS = [
@@ -615,28 +567,43 @@
       { regex: /\b(naked|nude|bare)\b/gi, safe: "dressed in simple linen", reason: "노출 오해 단어 → 리넨 복장으로 순화" }
     ];
 
-    let originalPromptsBackup = { cut1: [], cut2: [] };
+    let originalPromptsBackup = { cut1: [], cut2: [], sample: [] };
     let currentTechScore = 0;
     let hasUploadedImage = false;
     let currentImageBase64 = null;
+    let sampleImageBase64 = null;
+    let sampleVisualTone = "warm golden sunlight";
 
     function init() {
       updateDetectedRef();
       updateApiBadge();
+      setupDropZones();
+    }
+
+    function setupDropZones() {
+      const bindDrop = (elId, handler) => {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('border-amber-500'); });
+        el.addEventListener('dragleave', () => el.classList.remove('border-amber-500'));
+        el.addEventListener('drop', e => {
+          e.preventDefault();
+          el.classList.remove('border-amber-500');
+          if (e.dataTransfer.files?.length) handler({ target: { files: e.dataTransfer.files } });
+        });
+      };
+      bindDrop('sampleDropZone', handleSampleUpload);
+      bindDrop('dropZone', handleImageUpload);
     }
 
     function switchTab(num) {
-      document.getElementById('tab1').classList.toggle('hidden', num !== 1);
-      document.getElementById('tab2').classList.toggle('hidden', num !== 2);
-      const b1 = document.getElementById('tabBtn1');
-      const b2 = document.getElementById('tabBtn2');
-      if (num === 1) {
-        b1.className = "px-5 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-slate-950 transition";
-        b2.className = "px-5 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition";
-      } else {
-        b2.className = "px-5 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-slate-950 transition";
-        b1.className = "px-5 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition";
-      }
+      [1, 2, 3].forEach(n => {
+        document.getElementById(`tab${n}`).classList.toggle('hidden', n !== num);
+        const btn = document.getElementById(`tabBtn${n}`);
+        btn.className = n === num
+          ? "px-4 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-slate-950 transition"
+          : "px-4 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition";
+      });
     }
 
     function parseEnglishBibleRef(rawInput) {
@@ -693,11 +660,9 @@
 
     function matchKeyword(textLower, key, exact) {
       const k = key.toLowerCase();
-      // 영문자/숫자로만 이루어진 단어이면서 exact: true인 경우 단어 경계(\b) 엄격 검사
       if (exact && /^[a-z0-9\s]+$/.test(k)) {
         const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`\\b${escaped}\\b`, 'i');
-        return regex.test(textLower);
+        return new RegExp(`\\b${escaped}\\b`, 'i').test(textLower);
       }
       return textLower.includes(k);
     }
@@ -718,14 +683,11 @@
 
     function renderImageGuideBox(chips, summaryText) {
       const box = document.getElementById('imageGuideBox');
-      const chipsEl = document.getElementById('imageKeywordChips');
-      const textEl = document.getElementById('imageGuideText');
-
       box.classList.remove('hidden');
-      chipsEl.innerHTML = chips.map(ch =>
+      document.getElementById('imageKeywordChips').innerHTML = chips.map(ch =>
         `<span class="text-[11px] px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/25 font-medium">${ch}</span>`
       ).join('');
-      textEl.innerHTML = summaryText;
+      document.getElementById('imageGuideText').innerHTML = summaryText;
     }
 
     function extractCleanEnglishNarrative(verse) {
@@ -743,10 +705,7 @@
         return;
       }
 
-      const errBanner = document.getElementById('apiErrorBanner');
-      errBanner.classList.add('hidden');
-      errBanner.textContent = "";
-
+      document.getElementById('apiErrorBanner').classList.add('hidden');
       const extracted = extractConcreteElements(ref, verse);
       const apiKey = localStorage.getItem('gemini_api_key');
 
@@ -760,7 +719,6 @@
       }
     }
 
-    // 본문 직결형 (어설픈 사물 추측 대신 본문 문맥 + 검증된 요소만 직결)
     function buildLiteralNarrativeLocally(ref, verse, extracted) {
       const bgs = extracted.filter(e => e.bg);
       const objs = extracted.filter(e => e.obj);
@@ -814,9 +772,7 @@
     async function fetchAvailableModels(apiKey) {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
       const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error?.message || `모델 목록 조회 실패 (HTTP ${res.status})`);
-      }
+      if (!res.ok || data.error) throw new Error(data.error?.message || `모델 목록 조회 실패 (HTTP ${res.status})`);
       const list = (data.models || [])
         .filter(m =>
           Array.isArray(m.supportedGenerationMethods) &&
@@ -1005,7 +961,7 @@ Return STRICT JSON ONLY:
     }
 
     function fixFlowError(cutKey, mode) {
-      const prefix = cutKey === 'cut1' ? 'c1' : 'c2';
+      const prefix = cutKey === 'cut1' ? 'c1' : (cutKey === 'cut2' ? 'c2' : 'sp');
       const noticeEl = document.getElementById(`${cutKey}FixNotice`);
       const appliedReasons = [];
 
@@ -1050,7 +1006,7 @@ Return STRICT JSON ONLY:
     }
 
     function restoreOriginal(cutKey) {
-      const prefix = cutKey === 'cut1' ? 'c1' : 'c2';
+      const prefix = cutKey === 'cut1' ? 'c1' : (cutKey === 'cut2' ? 'c2' : 'sp');
       const backup = originalPromptsBackup[cutKey];
       if (!backup || backup.length === 0) return;
       for (let i = 0; i < 3; i++) {
@@ -1095,23 +1051,196 @@ Also provide Adobe Stock English Title (under 200 chars, NO "copy space", includ
       showToast("Gemini/ChatGPT 웹 복사용 마스터 요청문이 복사되었습니다!");
     }
 
-    function downloadCSV() {
-      const rows = [
-        ["Filename", "Title", "Keywords", "Category"],
-        ["cut1_image.jpg", document.getElementById('cut1Title').value, document.getElementById('cut1Keywords').value, "Religion"],
-        ["cut2_image.jpg", document.getElementById('cut2Title').value, document.getElementById('cut2Keywords').value, "Religion"]
+    /* TAB 2: SAMPLE IMAGE TO 3-STEP PROMPT */
+    function handleSampleUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        sampleImageBase64 = evt.target.result;
+        const img = new Image();
+        img.onload = function() {
+          document.getElementById('samplePreviewBox').classList.remove('hidden');
+          document.getElementById('samplePreviewImg').src = evt.target.result;
+          analyzeSampleColorAndRatio(img);
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function analyzeSampleColorAndRatio(img) {
+      const c = document.createElement('canvas');
+      c.width = 100;
+      c.height = 100;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0, 100, 100);
+      const data = ctx.getImageData(0, 0, 100, 100).data;
+
+      let rSum = 0, gSum = 0, bSum = 0, lumSum = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        rSum += data[i]; gSum += data[i + 1]; bSum += data[i + 2];
+        lumSum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      }
+      const n = data.length / 4;
+      const rAvg = rSum / n, bAvg = bSum / n, lumAvg = lumSum / n;
+      const isWarm = rAvg - bAvg > 18;
+      const isBright = lumAvg > 135;
+
+      sampleVisualTone = isWarm
+        ? (isBright ? "warm golden-hour natural sunlight and sunlit ochre tones" : "warm amber dramatic side lighting and deep earth shadows")
+        : (isBright ? "crisp natural daylight and neutral stone tones" : "soft moody low-key directional natural light");
+
+      const ratio = (img.naturalWidth / img.naturalHeight).toFixed(2);
+      document.getElementById('sampleAutoVisualInfo').innerHTML = `
+        <div><strong>해상도:</strong> ${img.naturalWidth} × ${img.naturalHeight} (비율 ${ratio})</div>
+        <div><strong>감지된 조명·색감:</strong> ${isWarm ? '따뜻한 황금/사막 톤' : '차분한 중립/자연 톤'} · ${isBright ? '밝고 선명한 노출' : '깊이감 있는 명암'}</div>
+      `;
+    }
+
+    async function generatePromptFromSample() {
+      const apiKey = localStorage.getItem('gemini_api_key');
+      const bgInput = document.getElementById('sampleBgDesc').value.trim();
+      const subjInput = document.getElementById('sampleSubjectDesc').value.trim();
+
+      if (!sampleImageBase64 && !bgInput && !subjInput) {
+        showToast("먼저 샘플 이미지를 올리거나 장면 요소를 입력해 주세요!");
+        return;
+      }
+
+      document.getElementById('sampleApiBanner').classList.add('hidden');
+
+      if (apiKey && sampleImageBase64) {
+        await generateSampleWithGeminiVision(apiKey);
+      } else {
+        buildSamplePromptLocally(bgInput, subjInput);
+      }
+    }
+
+    function buildSamplePromptLocally(bgInput, subjInput) {
+      const refVal = document.getElementById('sampleBibleRef').value.trim();
+      const engRef = parseEnglishBibleRef(refVal);
+
+      const bgDesc = bgInput || "the exact authentic environmental setting and spatial atmosphere of the reference sample";
+      const subjDesc = subjInput || "the exact human character, hand posture, clothing texture, and key objects seen in the reference sample";
+
+      const steps = [
+        `Create a 16:9 photorealistic background scene replicating ${bgDesc}, bathed in ${sampleVisualTone}, arranged with balanced Golden Ratio spatial depth. Shot on a 35mm lens, commercial stock photography aesthetic, no people, no text, no watermarks.`,
+        `Keep the exact background, lighting direction, and 16:9 Golden Ratio framing from the previous image. Place key materials at the Golden Ratio focal intersection: ${subjDesc}. Ensure human face and hands are anatomically clear with natural five fingers and undistorted posture.`,
+        `Preserve the exact composition, Golden Ratio subject placement, and anatomy from the previous step. Refine to ultra-detailed 8k resolution photorealistic commercial stock photo shot on a 35mm lens, pin-sharp focus from foreground to background, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, natural lighting highlights, no artifacts.`
       ];
+
+      renderSampleOutput(steps, `Photorealistic scene recreating ${subjDesc.slice(0, 60)} in 16:9 Golden Ratio composition`, ["photorealistic", "35mm", "golden ratio", "commercial stock", "8k", "ancient", "natural light", "raw stone texture", "coarse fabric", "close up", "biblical", "authentic", "skin pores", "historical", "storytelling"], engRef);
+      showToast("샘플 기반 3단계 프롬프트가 작성되었습니다!");
+    }
+
+    async function generateSampleWithGeminiVision(apiKey) {
+      const btn = document.getElementById('sampleGenerateBtn');
+      btn.disabled = true;
+      btn.textContent = "⏳ Gemini Vision이 샘플 이미지를 3단계로 역산 중...";
+
+      const refVal = document.getElementById('sampleBibleRef').value.trim();
+      const engRef = parseEnglishBibleRef(refVal);
+      const base64Data = sampleImageBase64.split(',')[1];
+      const mimeType = sampleImageBase64.split(';')[0].split(':')[1];
+
+      const prompt = `Please write the prompt to create the attached image as is, strictly following this 3-step structure optimized for Google Flow (Nano Banana 2.1 and Pro):
+- Step 1: Create the space and background (16:9, exact lighting, atmosphere, Golden Ratio depth, no people, no text).
+- Step 2: Place key materials (MUST start with "Keep the exact..." and place the exact person/hands/clothing/objects from the attached image at the Golden Ratio focal point, perfect human hand, natural 5 fingers, anatomically clear face and hands).
+- Step 3: Expressing details and adding special effects (MUST start with "Preserve the exact...", pin-sharp focus from foreground to background, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, 8k resolution, shot on 35mm lens, commercial stock photo, no artifact, 95% Adobe Stock approval quality).
+Also output an Adobe Stock English Title (under 200 chars${engRef ? `, MUST include "${engRef}"` : ''}) and 25 relevant English Keywords.
+Return STRICT JSON ONLY:
+{
+  "step1": "...",
+  "step2": "...",
+  "step3": "...",
+  "title": "...",
+  "keywords": ["kw1", "kw2"]
+}`;
+
+      try {
+        const rawText = await callGeminiWithFallback(apiKey, {
+          contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType, data: base64Data } }] }],
+          generationConfig: { responseMimeType: "application/json" }
+        });
+        const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        renderSampleOutput([parsed.step1, parsed.step2, parsed.step3], parsed.title, parsed.keywords || [], engRef);
+        showToast("Gemini Vision 샘플 이미지 역산 완료!");
+      } catch (e) {
+        const banner = document.getElementById('sampleApiBanner');
+        banner.classList.remove('hidden');
+        banner.innerHTML = `<strong>⚠️ Gemini API 안내:</strong> ${e.message}<br/><span class="text-slate-300">→ API 없이 완벽히 역산하시려면 아래 <strong>[📋 샘플 이미지와 함께 웹에 붙일 요청문 복사]</strong> 버튼을 눌러 Gemini/ChatGPT 웹에 사진과 함께 붙여넣으세요!</span>`;
+        buildSamplePromptLocally(document.getElementById('sampleBgDesc').value.trim(), document.getElementById('sampleSubjectDesc').value.trim());
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "✨ 이미지 샘플 → 3단계 프롬프트 작성";
+      }
+    }
+
+    function renderSampleOutput(steps, rawTitle, kwArr, engRef) {
+      originalPromptsBackup.sample = [...steps];
+      document.getElementById('sampleFixNotice').classList.add('hidden');
+      renderEditableSteps('sampleSteps', steps, 'sp');
+      document.getElementById('sampleTitle').value = formatAdobeTitle(rawTitle, engRef);
+      const refBookKw = engRef ? engRef.split(' ')[0] : null;
+      const mergedKw = [...(refBookKw ? [engRef, refBookKw] : []), ...kwArr, "photorealistic", "35mm", "commercial stock", "golden ratio"];
+      document.getElementById('sampleKeywords').value = [...new Set(mergedKw)].slice(0, 25).join(', ');
+      document.getElementById('sampleEmptyState').classList.add('hidden');
+      document.getElementById('sampleResultWrapper').classList.remove('hidden');
+    }
+
+    function copySampleWebPrompt() {
+      const refVal = document.getElementById('sampleBibleRef').value.trim();
+      const engRef = parseEnglishBibleRef(refVal);
+      const promptText = `Please write the prompt to create the attached image as is.
+Step 1 - Create the space and background (16:9 ratio, Golden Ratio spatial depth, lighting, environment, no people)
+Step 2 - Place key materials (Keep the exact background from Step 1. Position the character/hands/objects using Golden Ratio in 16:9, perfect human hand, natural five fingers, anatomically clear face and hands)
+Step 3 - Expressing details and adding special effects (Preserve the exact composition from Step 2. Pin-sharp focus from foreground to background, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, no artifact, 8k resolution, shot on 35mm lens, commercial stock photo)
+Please fill out the prompts according to the Nano Banana 2.1 and Pro optimization principles. Prohibition on making images. It is important to have 95% Adobe Stock approval.
+Also provide an Adobe Stock English Title (under 200 chars${engRef ? `, include "${engRef}"` : ''}) and 25 English Keywords.`;
+      navigator.clipboard.writeText(promptText);
+      showToast("샘플 이미지 역산용 마스터 프롬프트가 복사되었습니다!");
+    }
+
+    function resetSampleTab() {
+      sampleImageBase64 = null;
+      document.getElementById('sampleInput').value = "";
+      document.getElementById('sampleBibleRef').value = "";
+      document.getElementById('sampleBgDesc').value = "";
+      document.getElementById('sampleSubjectDesc').value = "";
+      document.getElementById('samplePreviewBox').classList.add('hidden');
+      document.getElementById('sampleApiBanner').classList.add('hidden');
+      document.getElementById('sampleResultWrapper').classList.add('hidden');
+      document.getElementById('sampleEmptyState').classList.remove('hidden');
+      showToast("샘플 역산 탭이 초기화되었습니다.");
+    }
+
+    function downloadCSV(source) {
+      let rows;
+      if (source === 'tab2') {
+        rows = [
+          ["Filename", "Title", "Keywords", "Category"],
+          ["sample_recreated.jpg", document.getElementById('sampleTitle').value, document.getElementById('sampleKeywords').value, "Religion"]
+        ];
+      } else {
+        rows = [
+          ["Filename", "Title", "Keywords", "Category"],
+          ["cut1_image.jpg", document.getElementById('cut1Title').value, document.getElementById('cut1Keywords').value, "Religion"],
+          ["cut2_image.jpg", document.getElementById('cut2Title').value, document.getElementById('cut2Keywords').value, "Religion"]
+        ];
+      }
       const csvContent = rows.map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")).join("\n");
       const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "adobe_stock_metadata.csv";
+      a.download = source === 'tab2' ? "adobe_stock_sample_metadata.csv" : "adobe_stock_metadata.csv";
       a.click();
       URL.revokeObjectURL(url);
     }
 
-    /* TAB 2: IMAGE AUDITOR */
+    /* TAB 3: IMAGE AUDITOR */
     function handleImageUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
