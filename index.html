@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bible Flow Studio v0.1.2 — 설교 & 어도비 스톡 3단계 프롬프트·검수기</title>
+  <title>Bible Flow Studio v0.1.3 — 설교 & 어도비 스톡 3단계 프롬프트·검수기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
@@ -24,7 +24,7 @@
           <div class="flex items-center gap-2">
             <h1 class="text-lg font-bold tracking-tight text-white">Bible Flow Studio</h1>
             <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
-              v0.1.2
+              v0.1.3
             </span>
           </div>
           <p class="text-xs text-slate-400">텍스트 충실 프롬프트 · Flow 에러 자동 수정 · Adobe Stock 95% 승인 검수</p>
@@ -94,10 +94,11 @@
           </button>
         </div>
 
-        <!-- Detected concrete elements -->
-        <div id="detectedElementsBox" class="hidden p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-          <div class="text-[11px] font-bold text-emerald-400">🔎 본문에서 추출한 핵심 시각 요소</div>
-          <p id="detectedElementsText" class="text-xs text-slate-300 leading-relaxed"></p>
+        <!-- Keyword-Focused Image Generation Explanation Box -->
+        <div id="imageGuideBox" class="hidden p-3.5 rounded-xl bg-slate-950 border border-amber-500/30 space-y-2.5">
+          <div class="text-xs font-bold text-amber-400">🎨 생성 가능 이미지 안내 (키워드 중심)</div>
+          <div id="imageKeywordChips" class="flex flex-wrap gap-1.5"></div>
+          <p id="imageGuideText" class="text-xs text-slate-300 leading-relaxed"></p>
         </div>
 
         <!-- Status / Error Notice -->
@@ -114,7 +115,7 @@
           <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
             왼쪽에 <strong>성경 출처</strong>와 <strong>본문</strong>을 입력한 뒤<br/>
             <span class="text-amber-400 font-semibold">[💡 본문 기반 판매 베스트 3안 추천받기]</span>를 누르시면,<br/>
-            본문 내용에 충실하면서도 잘 팔리는 3가지 아이디어를 제안합니다.
+            생성 가능한 이미지 키워드 설명과 3가지 추천안을 제안합니다.
           </p>
         </div>
 
@@ -423,34 +424,33 @@
       ["몬", "Philemon"], ["히", "Hebrews"], ["약", "James"], ["유", "Jude"], ["계", "Revelation"]
     ];
 
-    // 본문 텍스트에서 구체적인 시각 요소(배경/사물/감정/행동)를 1:1 추출하는 정밀 사전
     const CONCRETE_ELEMENTS = [
-      { keys: ["stick", "staff", "rod", "지팡이", "막대기"], labelKr: "나무 지팡이", obj: "a rough, gnarled natural wooden shepherd stick", kw: "wooden staff" },
-      { keys: ["bush", "thorn", "fire", "flame", "burn", "떨기나무", "불꽃", "불"], labelKr: "빛나는 불꽃/떨기나무", obj: "a weathered desert thorn bush glowing softly in warm golden firelight", kw: "burning bush" },
-      { keys: ["brick", "mud", "clay", "straw", "벽돌", "진흙", "짚"], labelKr: "진흙 벽돌과 짚", obj: "a rough wooden brick mold, wet clay mud, and sparse broken dry straw", kw: "mudbrick" },
-      { keys: ["worship", "bow", "heads down", "kneel", "경배", "머리 숙", "엎드려", "절하"], labelKr: "머리 숙인 경배", emotion: "with head gently bowed and eyes softly closed in deep reverence and worship", handPose: "hands humbly pressed together in quiet reverence", kw: "worship" },
-      { keys: ["pray", "supplication", "ask", "기도", "간구", "부르짖"], labelKr: "간절한 기도", emotion: "looking slightly skyward in earnest, sincere silent prayer", handPose: "weathered hands folded gently in earnest prayer", kw: "prayer" },
-      { keys: ["believe", "faith", "sign", "wonder", "trust", "믿었", "믿음", "표적", "이적"], labelKr: "믿음과 확신", emotion: "gazing forward with awe-struck eyes filled with deep belief and conviction", handPose: "hands held steadily in resolute trust", kw: "faith" },
-      { keys: ["fear", "afraid", "ran", "tremble", "두려", "무서", "도망"], labelKr: "긴장과 용기", emotion: "taking a deep breath with focused courage overcoming initial hesitation", handPose: "hands reaching forward steadily with quiet courage", kw: "courage" },
-      { keys: ["sorry", "mercy", "hard life", "cry", "tear", "suffer", "고난", "불쌍", "긍휼", "눈물", "슬픔"], labelKr: "고통과 하나님의 위로", emotion: "with deeply expressive glistening eyes filled with quiet endurance and hope", handPose: "calloused hands resting gently over the heart on coarse linen", kw: "compassion" },
-      { keys: ["shepherd", "sheep", "lamb", "flock", "목자", "양", "어린 양"], labelKr: "목자와 양털", obj: "soft natural sheep wool beside a rustic wooden shepherd staff", kw: "shepherd" },
-      { keys: ["pasture", "grass", "field", "초장", "풀밭", "들판", "밭"], labelKr: "푸른 초장/들판", bg: "sunlit ancient Judean grassy hills and open valley pasture under warm morning light", kw: "pasture" },
-      { keys: ["well", "water", "river", "stream", "jar", "우물", "물", "강", "시냇", "물동이"], labelKr: "물과 돌우물/토기", obj: "a handmade weathered clay water jar resting on a sunlit raw stone well edge", kw: "clay jar" },
-      { keys: ["sea", "boat", "ship", "storm", "wave", "fish", "net", "바다", "배", "풍랑", "그물"], labelKr: "바다·배·그물", bg: "an ancient rocky shoreline by sunlit waters at dawn with weathered timber dock edges", obj: "thick woven natural hemp rope and coarse fishing net on weathered boat timber", kw: "fishing net" },
-      { keys: ["bread", "loaf", "barley", "떡", "빵", "보리"], labelKr: "거친 보리빵", obj: "a rustic baked coarse barley bread loaf being gently broken", kw: "barley bread" },
-      { keys: ["wine", "cup", "chalice", "포도주", "잔"], labelKr: "토기 잔과 포도주", obj: "a humble handmade earthenware cup on a weathered wood and stone table", kw: "earthenware cup" },
-      { keys: ["seed", "sow", "wheat", "grain", "harvest", "씨", "밀", "추수"], labelKr: "밀 씨앗과 흙", obj: "golden wheat seeds cupped in palms above dark dry fertile soil", kw: "wheat seeds" },
-      { keys: ["scroll", "book", "law", "word", "write", "두루마리", "책", "율법", "말씀"], labelKr: "양피지 두루마리", obj: "an aged blank parchment scroll gently unrolled on raw limestone", kw: "ancient scroll" },
-      { keys: ["lamp", "light", "candle", "dawn", "등불", "등잔", "빛", "새벽"], labelKr: "토기 등잔과 빛", obj: "a small handmade terracotta olive oil lamp with a warm steady flame", kw: "oil lamp" },
-      { keys: ["mountain", "hill", "rock", "stone", "altar", "산", "언덕", "바위", "돌", "제단"], labelKr: "거친 반석과 산", bg: "a rugged sunlit ancient Middle Eastern rocky mountainside with weathered raw limestone boulders", obj: "sun-baked raw sandstone rocks stacked naturally", kw: "raw stone" },
-      { keys: ["desert", "wilderness", "sand", "journey", "way", "광야", "사막", "여정", "길"], labelKr: "광야와 사막 길", bg: "an expansive arid desert wilderness trail bathed in warm golden afternoon sunlight", kw: "desert" },
-      { keys: ["olive", "vine", "branch", "fig", "감람", "올리브", "포도나무", "무화과"], labelKr: "올리브/포도 가지", obj: "a fresh olive branch with silvery-green leaves resting on sunlit stone", kw: "olive branch" },
-      { keys: ["sandal", "foot", "feet", "wash", "신발", "발", "씻"], labelKr: "거친 가죽 신발/발", obj: "worn ancient leather sandals beside a stone basin of clear water", kw: "leather sandals" },
-      { keys: ["tent", "house", "door", "장막", "천막", "집", "문"], labelKr: "고대 천막/돌집", bg: "the sunlit entrance of an ancient woven goat-hair desert tent and raw stone courtyard", kw: "ancient tent" },
-      { keys: ["palace", "king", "throne", "pharaoh", "궁", "왕", "보좌", "바로"], labelKr: "고대 석조 회랑/권위", bg: "a grand sunlit ancient Middle Eastern carved sandstone pillar courtyard with long afternoon shadows", kw: "ancient pillars" }
+      { keys: ["stick", "staff", "rod", "지팡이", "막대기"], chip: "#나무 지팡이", obj: "a rough, gnarled natural wooden shepherd stick", kw: "wooden staff" },
+      { keys: ["throw", "threw", "ground", "floor", "dust", "던지", "땅에", "바닥", "먼지"], chip: "#거친 흙바닥·던짐", bg: "a sun-baked ancient Middle Eastern dry earth and dusty desert ground under crisp afternoon light", handPose: "hands opening over sunlit dusty earth above a wooden staff", kw: "desert ground" },
+      { keys: ["snake", "serpent", "ran", "fear", "afraid", "놀라", "피하", "두려", "뱀"], chip: "#놀람·물러서는 긴장감", emotion: "stepping back slightly with wide surprised eyes and focused courage, overcoming sudden tension", safeNote: "위협적 뱀 묘사는 스톡 반려 방지를 위해 '지팡이와 놀란 시선·손동작'으로 순화됩니다.", kw: "courage" },
+      { keys: ["bush", "thorn", "fire", "flame", "burn", "떨기나무", "불꽃", "불"], chip: "#빛나는 불꽃·떨기나무", obj: "a weathered desert thorn bush glowing softly in warm golden firelight", kw: "burning bush" },
+      { keys: ["brick", "mud", "clay", "straw", "벽돌", "진흙", "짚"], chip: "#진흙 벽돌·마른 짚", obj: "a rough wooden brick mold, wet clay mud, and sparse broken dry straw", kw: "mudbrick" },
+      { keys: ["worship", "bow", "heads down", "kneel", "경배", "머리 숙", "엎드려", "절하"], chip: "#머리 숙인 경배", emotion: "with head gently bowed and eyes softly closed in deep reverence and worship", handPose: "hands humbly pressed together in quiet reverence", kw: "worship" },
+      { keys: ["pray", "supplication", "ask", "기도", "간구", "부르짖"], chip: "#간절한 기도", emotion: "looking slightly skyward in earnest, sincere silent prayer", handPose: "weathered hands folded gently in earnest prayer", kw: "prayer" },
+      { keys: ["believe", "faith", "sign", "wonder", "trust", "믿었", "믿음", "표적", "이적"], chip: "#믿음·경외의 시선", emotion: "gazing forward with awe-struck eyes filled with deep belief and conviction", handPose: "hands held steadily in resolute trust", kw: "faith" },
+      { keys: ["sorry", "mercy", "hard life", "cry", "tear", "suffer", "고난", "불쌍", "긍휼", "눈물", "슬픔"], chip: "#애절한 눈빛·위로", emotion: "with deeply expressive glistening eyes filled with quiet endurance and hope", handPose: "calloused hands resting gently over the heart on coarse linen", kw: "compassion" },
+      { keys: ["shepherd", "sheep", "lamb", "flock", "목자", "양", "어린 양"], chip: "#목자·부드러운 양털", obj: "soft natural sheep wool beside a rustic wooden shepherd staff", kw: "shepherd" },
+      { keys: ["pasture", "grass", "field", "초장", "풀밭", "들판", "밭"], chip: "#푸른 초장·들판", bg: "sunlit ancient Judean grassy hills and open valley pasture under warm morning light", kw: "pasture" },
+      { keys: ["well", "water", "river", "stream", "jar", "우물", "물", "강", "시냇", "물동이"], chip: "#돌우물·흙 물동이", obj: "a handmade weathered clay water jar resting on a sunlit raw stone well edge", kw: "clay jar" },
+      { keys: ["sea", "boat", "ship", "storm", "wave", "fish", "net", "바다", "배", "풍랑", "그물"], chip: "#바다·나무배·그물", bg: "an ancient rocky shoreline by sunlit waters at dawn with weathered timber dock edges", obj: "thick woven natural hemp rope and coarse fishing net on weathered boat timber", kw: "fishing net" },
+      { keys: ["bread", "loaf", "barley", "떡", "빵", "보리"], chip: "#거친 보리빵", obj: "a rustic baked coarse barley bread loaf being gently broken", kw: "barley bread" },
+      { keys: ["wine", "cup", "chalice", "포도주", "잔"], chip: "#토기 잔·포도주", obj: "a humble handmade earthenware cup on a weathered wood and stone table", kw: "earthenware cup" },
+      { keys: ["seed", "sow", "wheat", "grain", "harvest", "씨", "밀", "추수"], chip: "#밀 씨앗·거친 흙", obj: "golden wheat seeds cupped in palms above dark dry fertile soil", kw: "wheat seeds" },
+      { keys: ["scroll", "book", "law", "word", "write", "두루마리", "책", "율법", "말씀"], chip: "#양피지 두루마리", obj: "an aged blank parchment scroll gently unrolled on raw limestone", kw: "ancient scroll" },
+      { keys: ["lamp", "light", "candle", "dawn", "등불", "등잔", "빛", "새벽"], chip: "#토기 등잔·따뜻한 빛", obj: "a small handmade terracotta olive oil lamp with a warm steady flame", kw: "oil lamp" },
+      { keys: ["mountain", "hill", "rock", "stone", "altar", "산", "언덕", "바위", "돌", "제단"], chip: "#거친 사암 반석", bg: "a rugged sunlit ancient Middle Eastern rocky mountainside with weathered raw limestone boulders", obj: "sun-baked raw sandstone rocks stacked naturally", kw: "raw stone" },
+      { keys: ["desert", "wilderness", "sand", "journey", "way", "광야", "사막", "여정", "길"], chip: "#사막 광야길", bg: "an expansive arid desert wilderness trail bathed in warm golden afternoon sunlight", kw: "desert" },
+      { keys: ["olive", "vine", "branch", "fig", "감람", "올리브", "포도나무", "무화과"], chip: "#올리브 가지", obj: "a fresh olive branch with silvery-green leaves resting on sunlit stone", kw: "olive branch" },
+      { keys: ["sandal", "foot", "feet", "wash", "신발", "발", "씻"], chip: "#가죽 신발·발", obj: "worn ancient leather sandals beside a stone basin of clear water", kw: "leather sandals" },
+      { keys: ["tent", "house", "door", "장막", "천막", "집", "문"], chip: "#고대 천막·돌집", bg: "the sunlit entrance of an ancient woven goat-hair desert tent and raw stone courtyard", kw: "ancient tent" },
+      { keys: ["palace", "king", "throne", "pharaoh", "궁", "왕", "보좌", "바로"], chip: "#고대 석조 회랑", bg: "a grand sunlit ancient Middle Eastern carved sandstone pillar courtyard with long afternoon shadows", kw: "ancient pillars" }
     ];
 
-    // Flow 안전 필터 우회 치환 사전 (Flow 생성 불가 에러 시 자동 적용)
     const FLOW_SAFETY_REPLACEMENTS = [
       { regex: /\bJewish\b/gi, safe: "Eastern Mediterranean", reason: "특정 민족/종교 키워드(Jewish) → 역사적 지역 표현으로 순화" },
       { regex: /\bslave(s|ry)?\b/gi, safe: "ancient laborer", reason: "민감 단어(slave) → 고대 노동자(ancient laborer)로 순화" },
@@ -543,7 +543,6 @@
       return cleanBase.slice(0, 200);
     }
 
-    // 본문 텍스트 정밀 추출기
     function extractConcreteElements(ref, verse) {
       const combined = `${ref} ${verse}`.toLowerCase();
       const matched = [];
@@ -556,6 +555,18 @@
       }
       matched.sort((a, b) => b.hits - a.hits);
       return matched;
+    }
+
+    function renderImageGuideBox(chips, summaryText) {
+      const box = document.getElementById('imageGuideBox');
+      const chipsEl = document.getElementById('imageKeywordChips');
+      const textEl = document.getElementById('imageGuideText');
+
+      box.classList.remove('hidden');
+      chipsEl.innerHTML = chips.map(ch =>
+        `<span class="text-[11px] px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/25 font-medium">${ch}</span>`
+      ).join('');
+      textEl.innerHTML = summaryText;
     }
 
     async function recommendConcepts() {
@@ -573,33 +584,26 @@
       selectedConceptIdx = null;
       document.getElementById('resultsWrapper').classList.add('hidden');
 
-      // 본문 시각 요소 추출 표시
       const extracted = extractConcreteElements(ref, verse);
-      const detBox = document.getElementById('detectedElementsBox');
-      if (extracted.length > 0) {
-        detBox.classList.remove('hidden');
-        document.getElementById('detectedElementsText').textContent = extracted.slice(0, 5).map(e => e.labelKr).join(' · ');
-      } else {
-        detBox.classList.remove('hidden');
-        document.getElementById('detectedElementsText').textContent = "고대 중동 묵상·서사 일반 구도 적용";
-      }
-
       const apiKey = localStorage.getItem('gemini_api_key');
+
       if (apiKey) {
         await recommendConceptsWithGemini(apiKey, ref, verse, extracted);
       } else {
-        recommendedConcepts = buildTextFaithfulTop3Concepts(ref, verse, extracted);
+        const result = buildTextFaithfulTop3Concepts(ref, verse, extracted);
+        recommendedConcepts = result.concepts;
+        renderImageGuideBox(result.chips, result.guideText);
         renderConceptCards();
-        showToast("본문에 충실한 베스트 콘셉트 3안이 추천되었습니다!");
+        showToast("생성 가능 이미지 설명과 베스트 3안이 준비되었습니다!");
       }
     }
 
-    // 텍스트에 100% 충실한 로컬 3안 합성 엔진
     function buildTextFaithfulTop3Concepts(ref, verse, extracted) {
       const bgs = extracted.filter(e => e.bg);
       const objs = extracted.filter(e => e.obj);
       const emotions = extracted.filter(e => e.emotion);
       const hands = extracted.filter(e => e.handPose);
+      const safeNotes = extracted.map(e => e.safeNote).filter(Boolean);
       const kws = extracted.map(e => e.kw).filter(Boolean);
 
       const primaryBg = bgs[0]?.bg || "an authentic ancient Middle Eastern sunlit limestone courtyard with dusty desert air";
@@ -612,18 +616,31 @@
       const secondaryEmotion = emotions[1]?.emotion || "looking slightly upward in earnest, heartfelt devotion and trust";
 
       const primaryHand = hands[0]?.handPose || `hands interacting steadily and naturally with ${primaryObj}`;
-      const labelMain = extracted[0]?.labelKr || "말씀의 빛과 묵상";
-      const labelSub = extracted[1]?.labelKr || "거친 손의 헌신";
-      const labelObj = objs[0]?.labelKr || "고대 성경 사물";
+
+      const chips = [
+        ...extracted.slice(0, 4).map(e => e.chip),
+        "#고대 중동 실사",
+        "#거친 리넨·돌 질감",
+        "#자연광·여백"
+      ].slice(0, 6);
+
+      const cleanLabels = extracted.slice(0, 4).map(e => e.chip.replace('#', '')).join(', ');
+      const guideText = extracted.length > 0
+        ? `이 구절을 바탕으로 <strong>[${cleanLabels}]</strong> 키워드가 살아있는 고대 중동 배경의 <strong>인물 감정 클로즈업(Cut 1)</strong>과 <strong>손·사물 클로즈업(Cut 2)</strong> 실사 이미지가 생성됩니다.${safeNotes[0] ? `<br/><span class="text-emerald-400">🛡️ ${safeNotes[0]}</span>` : ''}`
+        : `이 구절을 바탕으로 <strong>[고대 중동 석조 배경, 묵상하는 인물의 표정, 거친 리넨 옷과 두 손, 따뜻한 자연광]</strong> 중심의 실사 스톡 이미지가 생성됩니다.`;
+
+      const mainKeyword = extracted[0]?.chip.replace('#', '') || "말씀 묵상";
+      const objKeyword = objs[0]?.chip.replace('#', '') || "고대 성경 사물";
+      const subKeyword = extracted[1]?.chip.replace('#', '') || "거친 손길";
 
       const topicBase = [...new Set([...kws, "faith", "ancient Middle East", "biblical"])].slice(0, 5).join(', ');
 
-      return [
+      const concepts = [
         {
           badge: "추천 1 · 최고 판매 보편 감성형",
           badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-          titleKr: `${labelMain}의 깊은 울림`,
-          descKr: `본문의 '${labelMain}' 정서를 담아 진심 어린 표정(Cut 1)과 정성스러운 두 손(Cut 2)을 구현합니다.`,
+          titleKr: `${mainKeyword}의 깊은 감정`,
+          descKr: `본문의 '${mainKeyword}' 정서를 담아 진심 어린 눈빛(Cut 1)과 정성스러운 손동작(Cut 2)을 구현합니다.`,
           salesPoint: "성경 설교뿐 아니라 기도·묵상·출판물에서도 폭넓게 팔리는 보편적 감성 스톡",
           safety: "승인 안전도 최상 (96%+)",
           bg: primaryBg,
@@ -634,8 +651,8 @@
         {
           badge: "추천 2 · 본문 충실 서사 직관형",
           badgeColor: "bg-sky-500/20 text-sky-300 border-sky-500/30",
-          titleKr: `${labelObj} 중심의 본문 장면`,
-          descKr: `텍스트 속 핵심 소재인 '${labelObj}'와 인물 감정(Cut 1) 및 손의 행동(Cut 2)을 직관적으로 재현합니다.`,
+          titleKr: `${objKeyword} 중심의 본문 장면`,
+          descKr: `텍스트 속 핵심 소재인 '${objKeyword}'와 인물 표정(Cut 1) 및 손의 행동(Cut 2)을 직관적으로 재현합니다.`,
           salesPoint: "설교 PPT에 띄우자마자 성도들이 본문 사건을 1초 만에 이해하는 설교 최적화 구도",
           safety: "승인 안전도 상 (95%+)",
           bg: secondaryBg,
@@ -646,8 +663,8 @@
         {
           badge: "추천 3 · 고승인·디자이너 선호형",
           badgeColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-          titleKr: `${labelSub} & 여백의 디테일`,
-          descKr: `자극 요소를 덜어내고 따뜻한 빛 속 인물(Cut 1)과 '${secondaryObj.split(' ').slice(0,4).join(' ')}' 곁의 손(Cut 2)에 집중합니다.`,
+          titleKr: `${subKeyword} & 여백의 디테일`,
+          descKr: `자극 요소를 덜어내고 따뜻한 빛 속 인물(Cut 1)과 '${objKeyword}' 곁의 두 손(Cut 2)에 집중합니다.`,
           salesPoint: "깨끗한 카피스페이스와 안전한 사물 구도로 반려 위험이 극히 낮아 디자이너가 선호",
           safety: "승인 안전도 최상 (97%+)",
           bg: primaryBg,
@@ -656,6 +673,8 @@
           topic: topicBase
         }
       ];
+
+      return { chips, guideText, concepts };
     }
 
     async function fetchAvailableModels(apiKey) {
@@ -752,22 +771,29 @@
       btn.textContent = "⏳ Gemini AI가 본문 분석 중...";
 
       const prompt = `You are a top Adobe Stock creative director and biblical visual artist.
-Analyze this EXACT Bible passage (${ref || 'Bible Passage'}: "${verse}") and propose 3 DISTINCT image concepts strictly faithful to the concrete objects, places, and emotions in the text, optimized for HIGHEST Adobe Stock sales AND 95%+ approval.
+Analyze this EXACT Bible passage (${ref || 'Bible Passage'}: "${verse}") and propose:
+1) "chips": 5 short Korean hashtag keywords describing what visual image can be generated (e.g., ["#사막 흙바닥", "#던져진 나무 지팡이", ...]).
+2) "guideText": 1-2 Korean sentences explaining what kind of photorealistic image can be generated based on those keywords (mentioning any safety replacement if violent/scary elements exist).
+3) "concepts": 3 DISTINCT image concepts strictly faithful to the text, optimized for HIGHEST Adobe Stock sales AND 95%+ approval.
 CRITICAL SAFETY: Strictly NO blood, wounds, violence, scary snakes/monsters, crowds, text, logos, famous people. Ancient Middle Eastern realistic setting.
-Return STRICT JSON ONLY (an array of 3 objects, no markdown):
-[
-  {
-    "badge": "추천 1 · 최고 판매 보편 감성형",
-    "titleKr": "짧은 한글 제목",
-    "descKr": "Cut 1(인물)과 Cut 2(손/사물) 장면 요약 (한글 1~2문장)",
-    "salesPoint": "어도비 스톡에서 잘 팔리는 이유 (한글 1문장)",
-    "safety": "승인 안전도 최상 (96%+)",
-    "bg": "English Step 1 ancient Middle Eastern background description",
-    "cut1": "English Cut 1 single person close-up description",
-    "cut2": "English Cut 2 weathered human hands & object close-up description",
-    "topic": "3-5 safe English topic words comma separated"
-  }
-]`;
+Return STRICT JSON ONLY:
+{
+  "chips": ["#키워드1", "#키워드2", "#키워드3", "#키워드4", "#키워드5"],
+  "guideText": "이 구절을 바탕으로 ... 이미지가 생성될 수 있습니다.",
+  "concepts": [
+    {
+      "badge": "추천 1 · 최고 판매 보편 감성형",
+      "titleKr": "짧은 한글 제목",
+      "descKr": "Cut 1(인물)과 Cut 2(손/사물) 장면 요약 (한글 1~2문장)",
+      "salesPoint": "어도비 스톡에서 잘 팔리는 이유 (한글 1문장)",
+      "safety": "승인 안전도 최상 (96%+)",
+      "bg": "English Step 1 ancient Middle Eastern background description",
+      "cut1": "English Cut 1 single person close-up description",
+      "cut2": "English Cut 2 weathered human hands & object close-up description",
+      "topic": "3-5 safe English topic words comma separated"
+    }
+  ]
+}`;
 
       try {
         const rawText = await callGeminiWithFallback(apiKey, {
@@ -781,14 +807,17 @@ Return STRICT JSON ONLY (an array of 3 objects, no markdown):
           "bg-sky-500/20 text-sky-300 border-sky-500/30",
           "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
         ];
-        recommendedConcepts = parsed.slice(0, 3).map((item, idx) => ({ ...item, badgeColor: colors[idx] || colors[0] }));
+        recommendedConcepts = (parsed.concepts || []).slice(0, 3).map((item, idx) => ({ ...item, badgeColor: colors[idx] || colors[0] }));
+        renderImageGuideBox(parsed.chips || [], parsed.guideText || "");
         renderConceptCards();
         showToast("Gemini AI 본문 분석 완료!");
       } catch (e) {
         const errBanner = document.getElementById('apiErrorBanner');
         errBanner.classList.remove('hidden');
         errBanner.innerHTML = `<strong>⚠️ Gemini API 안내:</strong> ${e.message}<br/><span class="text-slate-300">→ 내장된 텍스트 충실 분석 엔진으로 본문에 맞춰 추천했습니다.</span>`;
-        recommendedConcepts = buildTextFaithfulTop3Concepts(ref, verse, extracted);
+        const result = buildTextFaithfulTop3Concepts(ref, verse, extracted);
+        recommendedConcepts = result.concepts;
+        renderImageGuideBox(result.chips, result.guideText);
         renderConceptCards();
       } finally {
         btn.disabled = false;
@@ -930,7 +959,6 @@ Return STRICT JSON ONLY (an array of 3 objects, no markdown):
       }).join('');
     }
 
-    // Flow 에러 자동 해결 로직
     function fixFlowError(cutKey, mode) {
       const prefix = cutKey === 'cut1' ? 'c1' : 'c2';
       const noticeEl = document.getElementById(`${cutKey}FixNotice`);
@@ -948,7 +976,6 @@ Return STRICT JSON ONLY (an array of 3 objects, no markdown):
               appliedReasons.push(rule.reason);
             }
           }
-          // 추가 안전 정제: 부정 명령어("no people, no text..." 중 과도한 단어)를 긍정/중립 묘사로 완화
           text = text.replace(/completely free of artifacts or distortion\.?/gi, "clean natural camera photography.");
           text = text.replace(/completely free of artifacts\.?/gi, "clean natural camera photography.");
         } else if (mode === 'simplify') {
@@ -972,7 +999,7 @@ Return STRICT JSON ONLY (an array of 3 objects, no markdown):
       if (uniqueReasons.length > 0) {
         noticeEl.innerHTML = `<strong>✅ 수정 완료:</strong> ${uniqueReasons.join(' / ')}`;
       } else {
-        noticeEl.innerHTML = `<strong>ℹ️ 안내:</strong> 추가 민감어가 없었습니다. 여전히 에러가 뜨면 <strong>[⚡ 지시 단순화]</strong>를 누르거나 Step 2 문장의 특정 단어를 직접 고쳐보세요.`;
+        noticeEl.innerHTML = `<strong>ℹ️ 안내:</strong> 추가 민감어가 없었습니다. 여전히 에러가 뜨면 <strong>[⚡ 지시 단순화]</strong>를 누르거나 Step 2 문장을 직접 고쳐보세요.`;
       }
       showToast("Flow 에러 방지 수정이 적용되었습니다!");
     }
@@ -995,7 +1022,7 @@ Return STRICT JSON ONLY (an array of 3 objects, no markdown):
       updateDetectedRef();
       recommendedConcepts = [];
       selectedConceptIdx = null;
-      document.getElementById('detectedElementsBox').classList.add('hidden');
+      document.getElementById('imageGuideBox').classList.add('hidden');
       document.getElementById('apiErrorBanner').classList.add('hidden');
       document.getElementById('conceptSection').classList.add('hidden');
       document.getElementById('resultsWrapper').classList.add('hidden');
@@ -1014,7 +1041,7 @@ Return STRICT JSON ONLY (an array of 3 objects, no markdown):
       const master = `Act as a top image artist and Adobe Stock best-seller strategist. Based strictly on this Bible passage (${ref}${engRef ? ` / ${engRef}` : ''}):
 "${verse}"
 
-First, recommend 3 high-selling Adobe Stock visual concepts faithful to the concrete objects and emotions in the text (1: Universal Emotion, 2: Direct Narrative, 3: High-Approval Hands/Objects) and ask me which one to generate.
+First, explain with keywords what kind of images can be generated, then recommend 3 high-selling Adobe Stock visual concepts faithful to the concrete objects and emotions in the text (1: Universal Emotion, 2: Direct Narrative, 3: High-Approval Hands/Objects) and ask me which one to generate.
 Rules:
 - Adobe Stock 95%+ approval & Google Flow safety filter safe: strictly NO blood, violence, snakes, weapons, crowds, text, or logos.
 - 16:9, Ancient Eastern Mediterranean realistic setting, natural copy space, 35mm lens, pin-sharp focus, ultra-detailed raw stone texture, authentic coarse fabric grain, realistic skin pores, natural 5 fingers, 8k commercial stock photo.
