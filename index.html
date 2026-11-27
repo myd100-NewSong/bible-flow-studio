@@ -269,7 +269,7 @@
             <p class="text-xs text-slate-400 mt-1">샘플 구도·색감·조명·소재를 분석해 3단계 프롬프트로 변환합니다</p>
           </div>
 
-          <button type="button" onclick="pasteSampleFromClipboard()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition">
+          <button type="button" onclick="pasteImageFromClipboard('sample')" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition">
             📋 클립보드의 이미지 붙여넣기
           </button>
 
@@ -378,9 +378,13 @@
           class="border-2 border-dashed border-slate-700 hover:border-amber-500 bg-slate-900 rounded-2xl p-8 text-center cursor-pointer transition">
           <input id="imageInput" type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)" />
           <div class="text-3xl mb-2">🖼️</div>
-          <p class="text-sm font-bold text-white">Flow에서 생성한 이미지를 클릭하거나 드래그하세요</p>
+          <p class="text-sm font-bold text-white">Flow에서 생성한 이미지를 클릭 · 드래그 · <span class="text-amber-400">붙여넣기(Ctrl/⌘+V)</span></p>
           <p class="text-xs text-slate-400 mt-1">서버로 전송되지 않으며 브라우저 안에서 100% 무료로 즉시 정밀 검사합니다</p>
         </div>
+
+        <button type="button" onclick="pasteImageFromClipboard('audit')" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition">
+          📋 클립보드의 이미지 붙여넣기
+        </button>
 
         <div id="previewContainer" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
           <div class="flex items-center justify-between">
@@ -1268,17 +1272,34 @@
       return true;
     }
 
+    function activePasteTarget() {
+      const t2 = document.getElementById('tab2');
+      const t3 = document.getElementById('tab3');
+      if (t2 && !t2.classList.contains('hidden')) return 'sample';
+      if (t3 && !t3.classList.contains('hidden')) return 'audit';
+      return null;
+    }
+
+    function routePastedFile(file, target) {
+      if (!file || !file.type || file.type.indexOf('image/') !== 0) return false;
+      if (target === 'sample') handleSampleUpload({ target: { files: [file] } });
+      else if (target === 'audit') handleImageUpload({ target: { files: [file] } });
+      else return false;
+      showToast(target === 'sample' ? "클립보드 이미지를 샘플로 불러왔습니다!" : "클립보드 이미지를 불러와 승인 검수를 시작합니다!");
+      return true;
+    }
+
     document.addEventListener('paste', function(e) {
-      const tab2 = document.getElementById('tab2');
-      if (!tab2 || tab2.classList.contains('hidden')) return;
+      const target = activePasteTarget();
+      if (!target) return;
       const items = (e.clipboardData && e.clipboardData.items) ? Array.from(e.clipboardData.items) : [];
       const imgItem = items.find(function(it) { return it.kind === 'file' && it.type.indexOf('image/') === 0; });
       if (!imgItem) return;
       e.preventDefault();
-      if (loadSampleFromFile(imgItem.getAsFile())) showToast("클립보드 이미지를 샘플로 불러왔습니다!");
+      routePastedFile(imgItem.getAsFile(), target);
     });
 
-    async function pasteSampleFromClipboard() {
+    async function pasteImageFromClipboard(target) {
       if (!navigator.clipboard || !navigator.clipboard.read) {
         showToast("이 브라우저는 버튼 붙여넣기를 지원하지 않습니다. Ctrl/⌘+V를 눌러 주세요.");
         return;
@@ -1289,9 +1310,7 @@
           const type = item.types.find(function(t) { return t.indexOf('image/') === 0; });
           if (type) {
             const blob = await item.getType(type);
-            const file = new File([blob], 'pasted-image.' + type.split('/')[1], { type: type });
-            loadSampleFromFile(file);
-            showToast("클립보드 이미지를 샘플로 불러왔습니다!");
+            routePastedFile(new File([blob], 'pasted-image.' + type.split('/')[1], { type: type }), target);
             return;
           }
         }
