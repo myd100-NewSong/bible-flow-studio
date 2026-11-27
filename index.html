@@ -265,9 +265,13 @@
             class="border-2 border-dashed border-slate-700 hover:border-amber-500 bg-slate-950 rounded-2xl p-6 text-center cursor-pointer transition">
             <input id="sampleInput" type="file" accept="image/*" class="hidden" onchange="handleSampleUpload(event)" />
             <div class="text-3xl mb-1.5">📷</div>
-            <p class="text-sm font-bold text-white">샘플 이미지를 클릭하거나 끌어다 놓으세요</p>
+            <p class="text-sm font-bold text-white">샘플 이미지를 클릭 · 끌어다 놓기 · <span class="text-amber-400">붙여넣기(Ctrl/⌘+V)</span></p>
             <p class="text-xs text-slate-400 mt-1">샘플 구도·색감·조명·소재를 분석해 3단계 프롬프트로 변환합니다</p>
           </div>
+
+          <button type="button" onclick="pasteSampleFromClipboard()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition">
+            📋 클립보드의 이미지 붙여넣기
+          </button>
 
           <div id="samplePreviewBox" class="hidden space-y-3">
             <img id="samplePreviewImg" class="w-full rounded-xl border border-slate-800 object-contain max-h-64 bg-black" alt="Sample Preview" />
@@ -1257,6 +1261,46 @@
     }
 
     /* TAB 2: REVERSE PROMPTING */
+    /* 샘플 이미지 붙여넣기 (Ctrl/⌘+V, 클립보드 버튼) */
+    function loadSampleFromFile(file) {
+      if (!file || !file.type || file.type.indexOf('image/') !== 0) return false;
+      handleSampleUpload({ target: { files: [file] } });
+      return true;
+    }
+
+    document.addEventListener('paste', function(e) {
+      const tab2 = document.getElementById('tab2');
+      if (!tab2 || tab2.classList.contains('hidden')) return;
+      const items = (e.clipboardData && e.clipboardData.items) ? Array.from(e.clipboardData.items) : [];
+      const imgItem = items.find(function(it) { return it.kind === 'file' && it.type.indexOf('image/') === 0; });
+      if (!imgItem) return;
+      e.preventDefault();
+      if (loadSampleFromFile(imgItem.getAsFile())) showToast("클립보드 이미지를 샘플로 불러왔습니다!");
+    });
+
+    async function pasteSampleFromClipboard() {
+      if (!navigator.clipboard || !navigator.clipboard.read) {
+        showToast("이 브라우저는 버튼 붙여넣기를 지원하지 않습니다. Ctrl/⌘+V를 눌러 주세요.");
+        return;
+      }
+      try {
+        const clipItems = await navigator.clipboard.read();
+        for (const item of clipItems) {
+          const type = item.types.find(function(t) { return t.indexOf('image/') === 0; });
+          if (type) {
+            const blob = await item.getType(type);
+            const file = new File([blob], 'pasted-image.' + type.split('/')[1], { type: type });
+            loadSampleFromFile(file);
+            showToast("클립보드 이미지를 샘플로 불러왔습니다!");
+            return;
+          }
+        }
+        showToast("클립보드에 이미지가 없습니다. 이미지를 복사한 뒤 다시 시도해 주세요.");
+      } catch (err) {
+        showToast("클립보드 접근이 거부되었습니다. 화면을 클릭한 뒤 Ctrl/⌘+V를 눌러 주세요.");
+      }
+    }
+
     function handleSampleUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
